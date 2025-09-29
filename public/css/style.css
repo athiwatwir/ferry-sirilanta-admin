@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;700&display=swap');
+
+html,
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+    font-family: "Bai Jamjuree", sans-serif;
+    font-weight: 700 !important;
+    font-style: normal;
+}
+
+@media (min-width: 1400px) {
+
+    .container-xxl,
+    .container-xl,
+    .container-lg,
+    .container-md,
+    .container-sm,
+    .container {
+        max-width: 98% !important;
+    }
+}
+
+.bai-jamjuree-regular {
+    font-family: "Bai Jamjuree", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.bai-jamjuree-bold {
+    font-family: "Bai Jamjuree", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.calendar-table tbody tr td {
+    padding: 4px;
+}
+
+.calendar-table thead tr th {
+    padding: 4px;
+}
+
+.calendar-table td:hover {
+    background-color: #d1e7dd;
+    transition: background-color 0.2s ease;
+}
+
+
+.animated-gradient-icon {
+    color: transparent;
+    background: linear-gradient(270deg, #00f260, #0575e6, #00f260);
+    /* สีไล่ระดับ */
+    background-size: 600% 600%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: gradientShift 6s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+
+.row-selected {
+    background-color: #d1e7dd;
+    /* เขียวอ่อนแบบ Bootstrap success */
+}
+
+
+
+.btn-hover:hover {
+    transform: translateX(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
