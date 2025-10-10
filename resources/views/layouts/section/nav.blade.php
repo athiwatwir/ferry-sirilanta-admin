@@ -1,32 +1,43 @@
 <aside id="layout-menu" class="layout-menu-horizontal menu-horizontal menu flex-grow-0">
+
     <div class="container-xxl d-flex h-100">
+
         <ul class="menu-inner py-1">
             <!-- Page -->
+            <li class="menu-item">
+                <a href="/" class="menu-link">
+                    <strong class="text-primary fs-5">SIRILANTA</strong>
+                </a>
+            </li>
+
+
             <li class="menu-item">
                 <a href="{{ route('booking.index') }}" class="menu-link">
                     <i class="menu-icon icon-base ti tabler-category  "></i>
                     <div data-i18n="Page 1">Bookings</div>
                 </a>
             </li>
+           
+
             <li class="menu-item">
                 <a href="{{ route('route.index') }}" class="menu-link">
                     <i class="menu-icon icon-base ti tabler-speedboat"></i>
-                    <div data-i18n="Page 1">Routes</div>
+                    <div data-i18n="Page 2">Routes</div>
                 </a>
             </li>
-
-
 
             <li class="menu-item">
-                <a href="{{ route('payment.index') }}" class="menu-link">
-                    <i class="menu-icon icon-base ti tabler-report-money"></i>
-                    <div data-i18n="Page 2">Payment Transactions</div>
+                <a href="{{ route('report.index') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-report"></i>
+                    <div data-i18n="Page 2">Reports</div>
                 </a>
             </li>
+
+            
             <li class="menu-item">
                 <a href="{{ route('user.index') }}" class="menu-link">
                     <i class="menu-icon icon-base ti tabler-user-hexagon"></i>
-                    <div data-i18n="Page 2">Users</div>
+                    <div data-i18n="Page 2">User</div>
                 </a>
             </li>
 
@@ -82,7 +93,27 @@
 
                 </ul>
             </li>
+            
 
+
+            <li class="menu-item">
+                <a href="javascript:void(0)" class="menu-link menu-toggle">
+                    <i class="menu-icon icon-base ti tabler-user-circle"></i>
+                    <div data-i18n="Page 2">Profile, {{ Auth::user()->name }}</div>
+                </a>
+                <ul class="menu-sub">
+                    <li class="menu-item">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
+                                                this.closest('form').submit();">
+                                <i class="icon-base ti tabler-power icon-md me-3"></i><span>Log Out</span>
+                            </a>
+
+                        </form>
+                    </li>
+                </ul>
+            </li>
         </ul>
     </div>
 </aside>

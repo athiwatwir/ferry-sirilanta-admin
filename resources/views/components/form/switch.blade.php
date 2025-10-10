@@ -3,8 +3,8 @@
 'label'=>'On',
 'value'=>'N'
 ])
-<label class="switch switch-lg switch-success">
-    <input type="checkbox" class="switch-input" name="{{ $name }}" id="{{ $name }}" value="{{ $value }}" @checked($value=='Y' ) />
+<label class="switch switch-lg switch-success mb-3">
+    <input type="checkbox" class="switch-input" name="{{ $name }}" id="{{ $name }}" value="Y" @checked($value=='Y' ) />
     <span class="switch-toggle-slider">
         <span class="switch-on">
             <i class="icon-base ti tabler-check"></i>

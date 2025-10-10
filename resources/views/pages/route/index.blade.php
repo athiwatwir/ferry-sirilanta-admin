@@ -3,114 +3,76 @@
 @section('content')
 
 <x-card>
-
     <div class="row">
-        <div class="col-12 col-lg-4">
-            <x-station.depart-selection label="From Station" :isrequire="false" />
+        <div class="col">
+   
+            <button class="btn btn-lg btn-outline-danger mb-2" disabled id="deleteBtn"><i class="icon-base ti tabler-trash me-1"></i> Delete Selected (<span id="selectedCount">0</span>)</button>
         </div>
-        <div class="col-12 col-lg-4">
-            <x-station.depart-selection label="To Station" :isrequire="false" />
-        </div>
-        <div class="col-12 col-lg-4 text-end">
-            <x-button.new text="Add Route" :href="route('route.create')" />
+        <div class="col">
+            <form action="{{ route('route.index') }}" id="frm-search" method="GET">
+                <div class="row">
+                    <div class="col">
+                        <x-station.selection name="depart_station_id" label="Station From" :isrequire="false" :selected="$depart_station_id" />
+                    </div>
+                    <div class="col">
+                        <x-station.selection name="dest_station_id" label="Station To" :isrequire="false" :selected="$dest_station_id" />
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
+    <hr>
     <div class="row">
         <div class="col-12">
-            <table class="table table-sm table-hover">
+            <x-table.datatabble class="table-sm table-hover">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Depart Time</th>
-                        <th>Arrive Time</th>
-                        <th>Type</th>
-                        <th>Seat</th>
-                        <th>Regular Price</th>
+                        <th>
+                            <div class="form-check form-check-success">
+                                <input class="form-check-input" type="checkbox" value="" id="selectAll" />
+                                <label class="form-check-label" for="selectAll">Select All</label>
+                            </div>
+                        </th>
+                        <th>Route</th>
 
-                        <th>Child Price</th>
-                        <th>Infant Price</th>
-                        <th></th>
+                        <th>Time Table</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($routes as $route)
-
-                    <tr class="">
-                        <td colspan="9">
-                            <x-route.route-title-row :departStation="$route['departure_station']" :destStation="$route['destination_station']" />
-                        </td>
-
-
-                    </tr>
-
-                    @foreach ($route['sub_routes'] as $subRoute)
-                    <tr @if ($subRoute['type']=='activity' ) class="table-active" @endif>
+                    <tr>
                         <td>
-                            <x-form.switch label="" :value="$subRoute['isactive']" />
-                        </td>
-                        <td>
-                            <strong>
-                                <x-label-time :time="$subRoute['depart_time']" /></strong>
-                            <br><small>{{ $subRoute['origin_timezone'] }}</small>
-                        </td>
-                        <td>
-                            <x-label-time :time="$subRoute['arrival_time']" />
-                            <br><small>{{ $subRoute['destination_timezone'] }}</small>
-                        </td>
-                        <td class="">
-                            @if ($subRoute['type']=='activity')
-                            <span class="badge bg-label-info">Activity route</span><br>
-                            @endif
-                            {{ $subRoute['boat_type'] }} <br />
+                            <div class="form-check form-check-success">
+                                <input class="form-check-input route-checkbox" type="checkbox" value="" name="route_ids[]" />
 
-                            <div class="col-12 d-flex align-items-center flex-wrap">
-
-                                @if (!empty($subRoute['icons']))
-                                @foreach ($subRoute['icons'] as $icon)
-                                <div class="avatar avatar-sm me-4 position-relative">
-                                    <img src="{{ $icon }}" alt="Avatar">
-                                    <small></small>
-
-                                </div>
-                                @endforeach
-                                @endif
                             </div>
                         </td>
+                        <td action-url="{{ route('route.edit',['route'=>$route]) }}">
+                            <x-station.route-title-small :departStation="$route->departStation" :destStation="$route->destStation" />
+                        </td>
+
                         <td>
-                            <x-label-number :number="$subRoute['seatamt']" />
+                            @foreach ($route->subRoutes as $subRoute)
+                            <span class="badge bg-label-secondary">
+                                <a href="javascript:void(0);" class="iframe-modal" modal-id="#modal-iframe-time" modal-url="{{ route('subRoute.show',['subRoute'=>$subRoute]) }}">
+                                    <x-label-time :time="$subRoute->depart_time" /></a>
+                            </span>
+                            @endforeach
                         </td>
-                        <td class="">
-                            <small>
-                                <x-label-price :price="$subRoute['cost_price']" /></small>
-                            <input type="number" name="price" id="" class="form-control" value="{{ $subRoute['price'] }}">
-                        </td>
-
-                        <td class="">
-                            <small>
-                                <x-label-price :price="$subRoute['cost_child_price']" /></small>
-                            <input type="number" name="child_price" id="" class="form-control" value="{{ $subRoute['child_price'] }}">
-                        </td>
-
-                        <td class="">
-                            <small>
-                                <x-label-price :price="$subRoute['cost_infant_price']" /></small>
-                            <input type="number" name="infant_price" id="" class="form-control" value="{{ $subRoute['infant_price'] }}">
+                        <td>
+                            <x-switch :action="route('route.changeStatus',['route'=>$route->id])" :isactive="$route->isactive" />
                         </td>
                         <td class="text-end">
-                            <input type="hidden" name="agent_sub_route_id" id="agent_sub_route_id" value="{{ $subRoute['agent_sub_route_id'] }}">
-                            <div class="d-flex align-items-center">
-                                <button class="btn btn-success rounded-pill waves-effect btn-icon me-3 save-bt" disabled><i class="base-icon ti tabler-device-floppy"></i></button>
+                            <x-button.dropdown :editUrl="route('route.edit',['route'=>$route])" :deleteUrl="route('route.destroy',['route'=>$route->id])">
 
-
-
-                            </div>
-
+                            </x-button.dropdown>
                         </td>
                     </tr>
                     @endforeach
-                    @endforeach
                 </tbody>
-            </table>
+            </x-table.datatabble>
         </div>
     </div>
 </x-card>
@@ -121,108 +83,82 @@
 @section('script')
 
 <script>
-    let isFormDirty = false;
-
     $(document).ready(function() {
-
-
-        $(document).on('change', 'tr input[type="number"]', function() {
-            const $row = $(this).closest('tr'); // หาแถว (row) ที่มี input เปลี่ยน
-            const $saveBtn = $row.find('.save-bt'); // หา save button ในแถวเดียวกัน
-
-            // Enable ปุ่ม ถ้ายัง disabled
-            if ($saveBtn.prop('disabled')) {
-                $saveBtn.prop('disabled', false);
-                isFormDirty = true;
-            }
+        $('#depart_station_id, #dest_station_id').on('change', function() {
+            showLoading();
+            $('#frm-search').submit();
         });
 
-        $(document).on('change', 'tr input.switch-input', function() {
-            const $row = $(this).closest('tr');
-            const token = $('meta[name="csrf-token"]').attr('content');
-
-            const subRouteId = $row.find('input[name="agent_sub_route_id"]').val();
-            let isactive = $row.find('input[name="isactive"]').val();
-            isactive = isactive == 'Y' ? 'N' : 'Y';
-            $row.find('input[name="isactive"]').val(isactive)
-
-            console.log({
-                isactive: isactive
-                , agent_sub_route_id: subRouteId
-            });
-
-
-            $.ajax({
-                url: '/api/agent-route/save'
-                , method: 'POST'
-                , data: {
-                    _token: token
-                    , isactive: isactive
-                    , agent_sub_route_id: subRouteId
-                }
-                , success: function(res) {
-                    //console.log(res);
-                    showSuccess();
-                }
-                , error: function() {
-                    alert('เกิดข้อผิดพลาด');
-                }
-            });
-
-
+        $('.iframe-modal').on('click', function() {
+            let id = $(this).attr('modal-id');
+            let url = $(this).attr('modal-url');
+            console.log(url);
+            $('#url').attr('src', url);
+            //location.reload();
+            $(id).modal('show');
         });
 
-        $('.save-bt').on('click', function() {
-            const $row = $(this).closest('tr');
-            const $saveBtn = $(this);
-            // ดึงข้อมูลจากแต่ละ input/select/checkbox
-            const token = $('meta[name="csrf-token"]').attr('content');
-
-            const price = $row.find('input[name="price"]').val();
-            const childPrice = $row.find('input[name="infant_price"]').val();
-            const infantPrice = $row.find('input[name="infant_price"]').val();
-            const subRouteId = $row.find('input[name="agent_sub_route_id"]').val();
-
-            console.log({
-                regular_price: price
-                , child_price: childPrice
-                , infant_price: infantPrice
-                , agent_sub_route_id: subRouteId
-            });
-
-            $.ajax({
-                url: '/api/agent-route/save'
-                , method: 'POST'
-                , data: {
-                    _token: token
-                    , price: price
-                    , child_price: childPrice
-                    , infant_price: infantPrice
-                    , agent_sub_route_id: subRouteId
-                }
-                , success: function(res) {
-                    console.log(res.message);
-                    isFormDirty = false;
-                    $saveBtn.prop('disabled', true);
-
-                    showSuccess();
-                }
-                , error: function() {
-                    alert('เกิดข้อผิดพลาด');
-                }
-            });
+        $('td[action-url]').addClass('pointer');
+        $('td[action-url]').on('click', function() {
+            let url = $(this).attr('action-url');
+            window.location.href = url; // เปิดลิงก์ในแท็บใหม่
         });
 
     });
 
-    // เตือนก่อนออกจากหน้า ถ้ามีการแก้ไข
-    window.addEventListener('beforeunload', function(e) {
-        if (isFormDirty) {
-            e.preventDefault(); // บาง browser ต้องการ
-            e.returnValue = ''; // สำคัญ: ต้องมีค่านี้เพื่อให้ browser แสดง prompt
-            return ''; // เผื่อ browser เก่า
+</script>
+
+<script>
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const userCheckboxes = document.querySelectorAll('.route-checkbox');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const deleteForm = document.getElementById('deleteForm');
+
+    // Select All functionality
+    selectAllCheckbox.addEventListener('change', function() {
+        userCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateDeleteButton();
+    });
+
+    // Individual checkbox change
+    userCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllCheckbox();
+            updateDeleteButton();
+        });
+    });
+
+    function updateSelectAllCheckbox() {
+        const totalCheckboxes = userCheckboxes.length;
+        const checkedCheckboxes = document.querySelectorAll('.route-checkbox:checked').length;
+
+        selectAllCheckbox.checked = totalCheckboxes === checkedCheckboxes && totalCheckboxes > 0;
+        selectAllCheckbox.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+    }
+
+    function updateDeleteButton() {
+        const checkedCount = document.querySelectorAll('.route-checkbox:checked').length;
+        selectedCount.textContent = checkedCount;
+        deleteBtn.disabled = checkedCount === 0;
+    }
+
+    // Confirm before delete
+    deleteForm.addEventListener('submit', function(e) {
+        const checkedCount = document.querySelectorAll('.route-checkbox:checked').length;
+        if (!confirm(`Are you sure you want to delete ${checkedCount} route(s)?`)) {
+            e.preventDefault();
         }
     });
 
 </script>
+
+@stop
+
+@section('modal')
+<x-modal id="modal-iframe-time" title="">
+    <iframe id="url" src="" width="100%" height="600" style="border: none;"></iframe>
+</x-modal>
 @stop

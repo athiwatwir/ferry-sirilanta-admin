@@ -13,9 +13,11 @@
     <link rel="shortcut icon" href="{{ asset('favicon/favicon.ico') }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}" />
     <meta name="apple-mobile-web-app-title" content="168789chang.com" />
+    <link rel="manifest" href="{{ asset('favicon/site.webmanifest') }}" />
 
 
     @include('layouts.section.style')
+    @stack('styles')
 </head>
 
 <body>
@@ -27,7 +29,7 @@
         <div class="layout-container">
             <!-- Navbar -->
 
-            @include('layouts.section.header')
+            @include('layouts.section.nav')
 
             <!-- / Navbar -->
 
@@ -36,7 +38,7 @@
                 <!-- Content wrapper -->
                 <div class="content-wrapper">
                     <!-- Menu -->
-                    @include('layouts.section.nav')
+
                     <!-- / Menu -->
 
                     <!-- Content -->

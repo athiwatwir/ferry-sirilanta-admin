@@ -55,20 +55,18 @@
         <div class="nav-align-top">
             <ul class="nav nav-pills flex-column flex-sm-row mb-6 gap-sm-0 gap-2">
                 <li class="nav-item">
-                    <a class="nav-link @if ($active=='dashboard')
-                        active
-                    @endif  waves-effect waves-light" href="{{ route('agent.show',['agent'=>$agent]) }}"><i class="icon-base ti tabler-layout-dashboard icon-sm me-1_5"></i> Dashboard</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link @if ($active=='route')
                         active
                     @endif  waves-effect waves-light" href="{{ route('agent.route',['agent'=>$agent]) }}"><i class="icon-base ti tabler-route icon-sm me-1_5"></i> Routes</a>
                 </li>
+                @if ($agent->is_use_wallet=='Y')
                 <li class="nav-item">
                     <a class="nav-link @if ($active=='wallet')
                         active
                     @endif  waves-effect waves-light" href="{{ route('agent.wallet',['agent'=>$agent]) }}"><i class="icon-base ti tabler-wallet icon-sm me-1_5"></i> Wallet</a>
                 </li>
+                @endif
+
                 <li class="nav-item">
                     <a class="nav-link @if ($active=='user')
                         active

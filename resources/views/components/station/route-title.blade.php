@@ -4,9 +4,9 @@
 ])
 <div class="row">
     <div class="col-12 col-lg-5 text-center">
-        <h4 class="mb-0 text-primary">[{{ $departStation['nickname'] }}] {{ $departStation['name'] }} </h4>
-        @if (!empty($departStation['piername']))
-        <strong>({{ $departStation['piername'] }})</strong>
+        <h4 class="mb-0 text-primary">[{{ $departStation['nickname'] }}] {{ $departStation['name_en'] }} </h4>
+        @if (!empty($departStation['piername_en']))
+        <strong>({{ $departStation['piername_en'] }})</strong>
         @endif
     </div>
 
@@ -31,9 +31,9 @@
     </div>
 
     <div class="col-12 col-lg-5">
-        <h4 class="mb-0 text-primary">[{{ $destStation['nickname'] }}] {{ $destStation['name'] }} </h4>
-        @if (!empty($destStation['piername']))
-        <strong>({{ $destStation['piername'] }})</strong>
+        <h4 class="mb-0 text-primary">[{{ $destStation['nickname'] }}] {{ $destStation['name_en'] }} </h4>
+        @if (!empty($destStation['piername_en']))
+        <strong>({{ $destStation['piername_en'] }})</strong>
         @endif
     </div>
 </div>

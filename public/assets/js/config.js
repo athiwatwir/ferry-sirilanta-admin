@@ -71,9 +71,9 @@ window.templateName = document.documentElement.getAttribute('data-template');
 
 if (typeof TemplateCustomizer !== 'undefined') {
     window.templateCustomizer = new TemplateCustomizer({
-        displayCustomizer: false,
+        displayCustomizer: true,
         lang: localStorage.getItem('templateCustomizer-' + templateName + '--Lang') || 'en', // Set default language here
-        defaultPrimaryColor: '#0c79b6',
+        defaultPrimaryColor: '#FFAB22',
         // defaultSkin: 1,
         // defaultTheme: 'system',
         // defaultSemiDark: true,
