@@ -57,4 +57,11 @@ class BookingService
     {
         return [];
     }
+
+
+    public function saveDraft($data)
+    {
+        $routes = app(ApiService::class)->post('/booking/create', $data);
+        return ($routes['data']);
+    }
 }

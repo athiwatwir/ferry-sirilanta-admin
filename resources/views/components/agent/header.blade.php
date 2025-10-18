@@ -15,18 +15,7 @@
                         <div class="user-profile-info">
                             <h3 class="mb-2 mt-lg-6">{{ $agent->name }}</h3>
                             <ul class="list-inline mb-0 d-flex align-items-center flex-wrap justify-content-sm-start justify-content-center gap-4 my-2">
-                                <li class="list-inline-item d-flex gap-2 align-items-center">
-                                    <i class="icon-base ti tabler-plug-connected icon-lg"></i><span class="fw-medium">API: @if ($agent->is_use_api == 'Y')
-                                        <span class="text-success">Enable</span> @else Disable
-                                        @endif</span>
 
-                                    @if ($agent->is_use_api == 'Y')
-                                    <span class="badge badge-outline-info">
-                                        KEY: {{ $agent->api_key }}
-                                    </span>
-                                    @endif
-
-                                </li>
                                 <li class="list-inline-item d-flex gap-2 align-items-center">
                                     <i class="icon-base ti tabler-wallet icon-lg"></i><span class="fw-medium">Wallet: @if ($agent->is_use_wallet == 'Y')
                                         <span class="text-success">Enable</span> @else Disable

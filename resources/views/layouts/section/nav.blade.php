@@ -17,7 +17,11 @@
                     <div data-i18n="Page 1">Bookings</div>
                 </a>
             </li>
-           
+
+            @if (Auth::user()->role =='ADMIN')
+
+
+
 
             <li class="menu-item">
                 <a href="{{ route('route.index') }}" class="menu-link">
@@ -33,8 +37,8 @@
                 </a>
             </li>
 
-            
-            <li class="menu-item">
+
+            <li class="menu-item" style="display: none;">
                 <a href="{{ route('user.index') }}" class="menu-link">
                     <i class="menu-icon icon-base ti tabler-user-hexagon"></i>
                     <div data-i18n="Page 2">User</div>
@@ -43,31 +47,8 @@
 
             <li class="menu-item">
                 <a href="javascript:void(0)" class="menu-link menu-toggle">
-                    <i class="menu-icon icon-base ti tabler-info-square-rounded"></i>
-                    <div data-i18n="Page 2">Information Setting</div>
-                </a>
-                <ul class="menu-sub">
-
-                    <li class="menu-item">
-                        <a href="{{ route('mapTable.index') }}" class="menu-link">
-                            <i class="menu-icon icon-base ti tabler-map"></i>
-                            <div data-i18n="Analytics">Route Map/Time Table</div>
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="{{ route('informationText.index') }}" class="menu-link">
-                            <i class="menu-icon icon-base ti tabler-align-box-center-middle"></i>
-                            <div data-i18n="Analytics">Information Text</div>
-                        </a>
-                    </li>
-
-                </ul>
-            </li>
-
-            <li class="menu-item">
-                <a href="javascript:void(0)" class="menu-link menu-toggle">
                     <i class="menu-icon icon-base ti tabler-adjustments-dollar"></i>
-                    <div data-i18n="Page 2">Financial Setting</div>
+                    <div data-i18n="Page 2">Setting</div>
                 </a>
                 <ul class="menu-sub">
                     <li class="menu-item">
@@ -90,11 +71,29 @@
                         </a>
                     </li>
 
+                    <li class="menu-item">
+                        <a href="{{ route('mapTable.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-map"></i>
+                            <div data-i18n="Analytics">Route Map/Time Table</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{{ route('informationText.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-align-box-center-middle"></i>
+                            <div data-i18n="Analytics">Information Text</div>
+                        </a>
+                    </li>
+
 
                 </ul>
             </li>
-            
-
+            <li class="menu-item">
+                <a href="{{ route('agent.index') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-users-group"></i>
+                    <div data-i18n="Page 2">Broker User/Agent</div>
+                </a>
+            </li>
+            @endif
 
             <li class="menu-item">
                 <a href="javascript:void(0)" class="menu-link menu-toggle">

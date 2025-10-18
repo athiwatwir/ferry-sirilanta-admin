@@ -3,20 +3,18 @@
 @section('content')
 <x-card>
     <x-form :action="route('agent.store')">
+        <input type="hidden" name="parent_agent_id" id="" value="{{ $agent->id }}">
+        <input type="hidden" name="code" id="" value="{{ $agent->code }}">
+        <input type="hidden" name="parent_agent_id" id="" value="{{ $agent->id }}">
+
         <div class="row">
+            <div class="col-12 col-lg-6">
+                <x-form.float.selection name="type" label="Type" :options="['AG'=>'Agent','BK'=>'Broker User']" />
+            </div>
             <div class="col-12 col-lg-6">
                 <x-form.float.input name="name" label="name" />
             </div>
-            <div class="col-12 col-lg-3">
-                <x-form.float.input name="code" label="code" help="Only a-z and 0-9" class="inp-eng-num" />
-            </div>
-            <div class="col-12 col-lg-3">
-                <x-form.float.input name="prefix" label="Ticket Prefix" help="Only a-z and 0-9" class="inp-eng-num" />
-            </div>
-            <div class="col-12 col-lg-6">
-                <label for="logo" class="form-label">Upload Logo</label>
-                <input class="form-control form-control-lg" id="logo" name="logo" type="file" accept="image/*">
-            </div>
+
             <div class="col-12 col-lg-6">
                 <x-form.float.textarea />
             </div>

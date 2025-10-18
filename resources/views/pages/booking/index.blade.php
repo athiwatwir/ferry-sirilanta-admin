@@ -86,7 +86,10 @@
                             <label for="email">Search Text</label>
                         </div>
                     </div>
-                    <div class="col-12 text-end">
+                    <div class="col-6">
+                        <x-button.new text="Create New Booking" :href="route('booking.flight')" />
+                    </div>
+                    <div class="col-6 text-end">
                         <a class="btn btn-secondary" href="{{ route('booking.index') }}"><i class="fa-solid fa-arrows-rotate"></i> Clear</a>
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i>
                             Search</button>
@@ -98,7 +101,7 @@
     </div>
     <hr>
     <div class="row">
-        
+
         <div class="col-12">
             <x-table.datatabble class="booking-table">
                 <thead>
@@ -135,7 +138,7 @@
                         <td><small>{{ $booking['bookingno'] }}</small></td>
 
                         <td><small>{{ $booking['ticketno'] }}</small></td>
-                       
+
                         <td class="text-center">
                             {{ $booking['trip_type'] }}
                         </td>
@@ -178,6 +181,10 @@
                                 </li>
                                 <li>
                                     <a class="dropdown-item" href="{{ route('print.ticket',['bookingno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-file-type-pdf icon-22px"></i> Print Ticket</a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('booking.payment',['invoiceno'=>$booking['bookingno']]) }}" target=""><i class="icon-base ti tabler-file-type-pdf icon-22px"></i> Payment</a>
                                 </li>
                             </x-button.dropdown>
                         </td>

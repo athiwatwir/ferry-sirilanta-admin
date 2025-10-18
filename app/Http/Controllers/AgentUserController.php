@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgentUser;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AgentUserController extends Controller
@@ -28,8 +29,9 @@ class AgentUserController extends Controller
      */
     public function store(Request $request)
     {
+        //dd($request->all());
         $agentId = $request->agent_id;
-        $agentUser = AgentUser::create($request->all());
+        $agentUser = User::create($request->all());
         session()->flash('success', __('messages.saved'));
         return redirect()->route('agent.user', ['agent' => $agentId]);
     }

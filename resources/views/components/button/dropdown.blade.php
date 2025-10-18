@@ -3,7 +3,7 @@
 'deleteUrl'=>''
 ])
 <div class="btn-group">
-    <button type="button" class="btn btn-primary btn-icon rounded-pill dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+    <button type="button" class="btn btn-primary btn-icon rounded-pill dropdown-toggle hide-arrow text-white" data-bs-toggle="dropdown">
         <i class="icon-base ti tabler-dots-vertical"></i>
     </button>
     <ul class="dropdown-menu">

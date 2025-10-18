@@ -10,44 +10,44 @@ class SequenceNumberHelper
 {
     public static function getDocumentno($type, $agentId = null)
     {
-        $sequence = Sequencenumber::where("type", $type)->first();
-        $newSequenceNumber = '0000000000';
-        //Log::debug($sequence);
-        if ($sequence) {
-            $today = date('Y-m-d');
-            $dataDate = $sequence->updated_at->format('Y-m-d');
+        $sequence = Sequencenumber::where("type", $type)
+            ->when($type != 'booking', function ($query) use ($agentId) {
+                return $query->where('agent_id', $agentId);
+            })
+            ->lockForUpdate()
+            ->first();
 
-            if ($type != 'BOOKING') {
-                if ($today != $dataDate) {
-                    $sequence->running = 0;
-                    $sequence->save();
-                    $sequence = Sequencenumber::where("type", $type)->first();
-                }
-            } else {
-                if ($today != $dataDate) {
-                    $sequence->running = 0;
-                    $sequence->save();
-                    $sequence = Sequencenumber::where("type", $type)->first();
-                }
-            }
-
-            $prefix = $sequence->prefix;
-
-            $dateformat = $sequence->dateformat;
-            $currentNumber = $sequence->running;
-            $runningDigit = $sequence->running_digit;
-
-            if (!is_null($dateformat) && $dateformat != '') {
-                $prefix .= date($dateformat);
-            }
-            $nextNumber = $currentNumber + 1;
-
-            $newSequenceNumber = $prefix . str_pad($nextNumber, $runningDigit, "0", STR_PAD_LEFT);
-
-            //update table
-            $sequence->running = $nextNumber;
-            $sequence->save();
+        // ถ้าไม่เจอ return ทันที
+        if (!$sequence) {
+            return '0000000000';
         }
+
+        $today = now()->format('Y-m-d');
+        $lastResetDate = $sequence->updated_at->format('Y-m-d');
+
+        // Reset running number if it's a new day
+        if ($today != $lastResetDate) {
+            $sequence->running = 0;
+        }
+
+        // Build document number
+        $prefix = $sequence->prefix;
+
+        if (!empty($sequence->dateformat)) {
+            $prefix .= now()->format($sequence->dateformat);
+        }
+
+        $nextNumber = $sequence->running + 1;
+        $newSequenceNumber = $prefix . str_pad(
+            $nextNumber,
+            $sequence->running_digit,
+            "0",
+            STR_PAD_LEFT
+        );
+
+        // Update sequence
+        $sequence->running = $nextNumber;
+        $sequence->save();
 
         return $newSequenceNumber;
     }

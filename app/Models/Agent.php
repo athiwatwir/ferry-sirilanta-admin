@@ -43,7 +43,10 @@ class Agent extends Model
         'logo',
         'description',
         'isactive',
-        'site_url'
+        'site_url',
+        'parent_agent_id',
+        'type',
+        'prefix'
 
     ];
 

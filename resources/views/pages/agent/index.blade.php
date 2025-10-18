@@ -15,8 +15,8 @@
                     <tr>
                         <th>#</th>
                         <th>Name</th>
+                        <th>Type</th>
                         <th>Code</th>
-                        <th class="text-center">API</th>
                         <th class="text-center">Wallet</th>
                         <th class="text-center">Active Route</th>
                         <th></th>
@@ -29,11 +29,13 @@
                         <td data-href="{{ route('agent.route',['agent'=>$item]) }}" class="clickable-row pointer">
                             <x-avatar :url="$item->logo" />
                         </td>
+
                         <td data-href="{{ route('agent.route',['agent'=>$item]) }}" class="clickable-row pointer">{{ $item->name }}</td>
-                        <td data-href="{{ route('agent.route',['agent'=>$item]) }}" class="clickable-row pointer">{{ $item->code }}</td>
-                        <td class="text-center clickable-row pointer" data-href="{{ route('agent.route',['agent'=>$item]) }}">
-                            <x-label-active-icon :isactive="$item->is_use_api" />
+                        <td>
+                            <x-label-agent-type :type="$item->type" />
                         </td>
+                        <td data-href="{{ route('agent.route',['agent'=>$item]) }}" class="clickable-row pointer">{{ $item->code }}</td>
+
                         <td class="text-center clickable-row pointer" data-href="{{ route('agent.route',['agent'=>$item]) }}">
                             <x-label-active-icon :isactive="$item->is_use_wallet" />
                         </td>

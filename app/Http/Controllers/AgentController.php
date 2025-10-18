@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agent;
 use App\Models\Sequencenumber;
+use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -16,10 +17,10 @@ class AgentController extends Controller
     public function index()
     {
         //
-        $agents = Agent::with(['activeAgentSubRoutes'])->get();
+        $agents = Agent::with(['activeAgentSubRoutes'])->where('type', '!=', 'API')->where('parent_agent_id', env("AGENT_ID"))->get();
 
         return view('pages.agent.index', [
-            'title' => 'Agent Management',
+            'title' => 'Broker User/Agent Management',
             'agents' => $agents
         ]);
     }
@@ -29,12 +30,15 @@ class AgentController extends Controller
      */
     public function create()
     {
+        $agent = Agent::whereId(env('AGENT_ID'))->first();
+
         return view('pages.agent.create', [
-            'title' => 'Create Agent',
+            'title' => 'Create New',
             'breadcrumbs' => [
-                'All agents' => route('agent.index'),
+                'All Broker User/Agent' => route('agent.index'),
                 'Create Agent' => ''
-            ]
+            ],
+            'agent' => $agent
         ]);
     }
 
@@ -46,11 +50,12 @@ class AgentController extends Controller
         // dd($request);
         $request->validate([
             'name' => 'required|string',
-            'code' => 'required|string',
+            'type' => 'required|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // สูงสุด 2MB
         ]);
 
-        $agent = Agent::create($request->only('name', 'code', 'description'));
+        $agent = Agent::create($request->all());
+
         $ticketSeq = Sequencenumber::create([
             'name' => 'Ticket ' . $request->code,
             'type' => 'ticket',
@@ -139,19 +144,14 @@ class AgentController extends Controller
         //dd($request);
         $request->validate([
             'name' => 'required|string',
-            'code' => 'required|string',
-            'prefix' => 'required|string',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // สูงสุด 2MB
+
         ]);
 
         $agent = Agent::whereId($id)->first();
         $agent->update([
             'name' => $request->name,
-            'code' => $request->code,
             'description' => $request->description,
             'is_use_wallet' => $request->is_use_wallet ?? 'N',
-            'is_use_api' => $request->is_use_api ?? 'N',
-            'api_key' => $request->api_key
         ]);
 
         if (!empty($request->logo)) {
@@ -224,11 +224,13 @@ class AgentController extends Controller
 
     public function user($id)
     {
-        $agent = Agent::with(['users'])->whereId($id)->first();
+        $agent = Agent::whereId($id)->first();
+        $users = User::where('agent_id', $agent->id)->get();
 
         return view('pages.agent.user', [
             'title' => 'User in Agent ' . $agent->name,
             'agent' => $agent,
+            'users' => $users,
             'breadcrumbs' => [
                 'All agents' => route('agent.index'),
                 'User in Agent ' . $agent->name => ''

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Agent;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -40,8 +42,24 @@ class LoginRequest extends FormRequest
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
+        $credentials = $this->only('email', 'password');
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $user = User::where('email', $credentials['email'])->first();
+        $agentId = env('AGENT_ID');
+
+        if ($user) {
+            if ($user->role == 'BK' || $user->role == 'AG') {
+                $agent = Agent::whereId($user->agent_id)->first();
+
+                if ($agent->parent_agent_id == env('AGENT_ID')) {
+                    $agentId = $user->agent_id;
+                }
+            }
+        }
+
+        $credentials['agent_id'] = $agentId; // ✅ เพิ่มเงื่อนไข AGENT_ID
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -80,6 +98,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('email')) . '|' . $this->ip());
     }
 }

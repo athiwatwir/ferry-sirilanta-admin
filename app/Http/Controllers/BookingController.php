@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UtilHelper;
 use App\Models\Agent;
 use App\Models\Booking;
 use App\Services\BookingService;
@@ -9,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Services\RouteService;
 
 class BookingController extends Controller
 {
@@ -21,6 +23,11 @@ class BookingController extends Controller
      */
     public function index()
     {
+        $agentId = env('AGENT_ID');
+
+        if (Auth::user()->role != 'ADMIN') {
+            $agentId = Auth::user()->agent_id;
+        }
         $station_from = request()->station_from;
         $station_to = request()->station_to;
         $departdate = request()->departdate;
@@ -64,7 +71,7 @@ class BookingController extends Controller
         $endDate = date('d/m/Y');
         $startTravelDate = Carbon::today()->subDays(7)->format('Y-m-d');
 
-        $conditionStr = 'b.agent_id = "'.env('AGENT_ID').'"';
+        $conditionStr = 'b.agent_id = "' . $agentId . '"';
         $dateFillter = true;
 
         if (!is_null($daterange) && $daterange != '') {
@@ -183,12 +190,43 @@ class BookingController extends Controller
         ]);
     }
 
+    public function flight()
+    {
+        $depart_station_id = request()->depart_station_id;
+        $dest_station_id = request()->dest_station_id;
+        $travel_date = request('travel_date');
+        $subRoutes = [];
+
+        if (!empty($depart_station_id)) {
+            $subRoutes = app(RouteService::class)->getRoutes($depart_station_id, $dest_station_id);
+            //dd($subRoutes);
+        }
+
+        return view('pages.booking.flight', [
+            'title' => 'Select Route',
+            'depart_station_id' => $depart_station_id,
+            'dest_station_id' => $dest_station_id,
+            'subRoutes' => $subRoutes,
+            'travel_date' => $travel_date
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        //
+        $sub_route_id = request('sub_route_id');
+        $travel_date = request('travel_date');
+
+        $subRoute = app(RouteService::class)->getRoute($sub_route_id);
+
+        return view('pages.booking.create', [
+            'title' => 'Create Booking',
+            'sub_route_id' => $sub_route_id,
+            'travel_date' => $travel_date,
+            'subRoute' => $subRoute
+        ]);
     }
 
     /**
@@ -196,9 +234,48 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = [
+            'departdate' => UtilHelper::dmYToYmd($request->departdate),
+            'adult_passenger' => $request->adult_passenger,
+            'child_passenger' => $request->child_passenger,
+            'infant_passenger' => $request->infant_passenger,
+            'discount' => 0,
+            'trip_type' => 'O',
+            'customers' => [
+                [
+                    'fullname' => $request->fullname ?? '-',
+                    'type' => 'ADULT',
+                    'email' => '',
+                    'mobile' => $request->mobile ?? '-',
+                    'isdefault' => 'Y',
+                    'passportno' => $request->passportno ?? '-',
+                ]
+            ],
+            'routes' => [
+                [
+                    'id' => $request->sub_route_id,
+                    'traveldate' => UtilHelper::dmYToYmd($request->departdate),
+                    'price' => $request->price,
+                    'child_price' => 0,
+                    'infant_price' => 0,
+                ]
+            ]
+        ];
+
+        $result = app(BookingService::class)->saveDraft($data);
+
+        return redirect()->route('booking.payment', ['invoiceno' => $result['invoiceno']]);
     }
 
+    public function payment($invoiceno)
+    {
+        $booking = Booking::where('bookingno', $invoiceno)->first();
+
+        return view('pages.booking.payment', [
+
+            'booking' => $booking
+        ]);
+    }
     /**
      * Display the specified resource.
      */

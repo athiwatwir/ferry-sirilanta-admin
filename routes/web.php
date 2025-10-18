@@ -102,6 +102,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/report', 'index')->name('report.index');
     });
 
+    Route::controller(BookingController::class)->group(function () {
+        Route::get('/booking/flight', 'flight')->name('booking.flight');
+        Route::get('/booking/payment/{invoiceno}', 'payment')->name('booking.payment');
+    });
+
     Route::controller(FinancialController::class)->group(function () {
         Route::get('/financial/fee', 'fee')->name('financial.fee');
         Route::get('/financial/fare', 'fare')->name('financial.fare');

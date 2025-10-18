@@ -8,30 +8,8 @@
             <div class="col-12 col-lg-6">
                 <x-form.float.input name="name" label="name" :value="$agent->name" />
             </div>
-            <div class="col-12 col-lg-3">
-                <x-form.float.input name="code" label="code" class="inp-eng-num" help="Only a-z and 0-9" :value="$agent->code" />
-            </div>
-            <div class="col-12 col-lg-3">
-                <x-form.float.input name="prefix" label="Ticket Prefix" class="inp-eng-num" help="Only a-z and 0-9" :value="$ticketSeq->prefix" />
-                <input type="hidden" name="prefix_old" value="{{ $ticketSeq->prefix }}">
-            </div>
-            <div class="col-12 col-lg-6">
-                <div class="row">
-                    <div class="col-12 col-lg-3">
-                        @if (!empty($agent->logo))
-                        <img src="{{ asset($agent->logo) }}" class="w-100" />
-                        @else
-                        <img src="{{ asset('images/no-image.webp') }}" class="w-100" />
-                        @endif
-                    </div>
-                    <div class="col-12 col-lg-9">
-                        <label for="formFileLg" class="form-label">Upload Logo</label>
-                        <input class="form-control" id="logo" name="logo" type="file" accept="image/*">
-                    </div>
-                </div>
 
 
-            </div>
             <div class="col-12 col-lg-6">
                 <x-form.float.textarea :value="$agent->description" />
             </div>
@@ -43,14 +21,7 @@
             </div>
 
             <div class="col-12 col-lg-6">
-                <x-form.switch name="is_use_api" label="Use API" :value="$agent->is_use_api" />
-                <div class="row" id="box-api" @if ($agent->is_use_api =='N')
-                    style="display: none;"
-                    @endif >
-                    <div class="col-12">
-                        <x-form.float.input name="api_key" label="api key" :isrequire="false" value="{{ $agent->api_key }}" />
-                    </div>
-                </div>
+
             </div>
         </div>
     </x-form>

@@ -32,7 +32,7 @@
 
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-warning d-grid w-100">Sign in</button>
+                    <button type="submit" class="btn btn-primary d-grid w-100">Sign in</button>
                 </form>
 
 

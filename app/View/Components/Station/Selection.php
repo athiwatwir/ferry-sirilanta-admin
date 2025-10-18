@@ -8,15 +8,19 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class Selection extends Component
 {
+    public $type;
+    public $agentId;
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public function __construct(string $type = '', string $agentId = '')
     {
-        //
+        $this->type = $type;
+        $this->agentId = $agentId;
     }
 
     /**
@@ -24,29 +28,54 @@ class Selection extends Component
      */
     public function render(): View|Closure|string
     {
-        $options = Cache::remember('section_station_options', 60 * 60, function () {
-            $sections = Section::where('isactive', 'Y')
-                ->with(['stations' => function ($query) {
-                    $query->select('id', 'nickname', 'name_en', 'piername_en', 'section_id');
-                }])
-                ->select('id', 'name')
-                ->orderBy('sort')
-                ->get();
+        $stationIds = null;
 
-            return $sections->mapWithKeys(function ($section) {
-                $data = collect($section->stations)->mapWithKeys(function ($station) {
-                    $text = sprintf('[%s] %s', $station->nickname, $station->name_en);
-                    if (!empty($station->piername_en)) {
-                        $text .= sprintf(' (%s)', $station->piername_en);
-                    }
-                    return [$station->id => $text];
+        if (!empty($this->agentId)) {
+            if ($this->type == 'depart') {
+                $stationIds = DB::table('agent_sub_routes as asr')
+                    ->join('sub_routes as sr', 'asr.sub_route_id', '=', 'sr.id')
+                    ->join('routes as r', 'sr.route_id', '=', 'r.id')
+                    ->where('asr.agent_id', $this->agentId)
+                    ->groupBy('r.depart_station_id')
+                    ->pluck('r.depart_station_id');
+            } elseif ($this->type == 'dest') {
+                $stationIds = DB::table('agent_sub_routes as asr')
+                    ->join('sub_routes as sr', 'asr.sub_route_id', '=', 'sr.id')
+                    ->join('routes as r', 'sr.route_id', '=', 'r.id')
+                    ->where('asr.agent_id', $this->agentId)
+                    ->groupBy('r.dest_station_id')
+                    ->pluck('r.dest_station_id');
+            }
+        }
+
+        $sections = Section::where('isactive', 'Y')
+            ->whereHas('stations', function ($query) use ($stationIds) {
+                $query->when($stationIds && $stationIds->isNotEmpty(), function ($q) use ($stationIds) {
+                    $q->whereIn('id', $stationIds);
                 });
+            })
+            ->with(['stations' => function ($query) use ($stationIds) {
+                $query->select('id', 'nickname', 'name_en', 'piername_en', 'section_id')
+                    ->when($stationIds && $stationIds->isNotEmpty(), function ($q) use ($stationIds) {
+                        $q->whereIn('id', $stationIds);
+                    });
+            }])
+            ->select('id', 'name')
+            ->orderBy('sort')
+            ->get();
 
-                return [$section->name => $data];
+        $options = $sections->mapWithKeys(function ($section) {
+            $data = collect($section->stations)->mapWithKeys(function ($station) {
+                $text = sprintf('[%s] %s', $station->nickname, $station->name_en);
+                if (!empty($station->piername_en)) {
+                    $text .= sprintf(' (%s)', $station->piername_en);
+                }
+                return [$station->id => $text];
             });
+
+            return [$section->name => $data];
         });
 
-        //dd($options);
         return view('components.station.selection', [
             'options' => $options
         ]);
