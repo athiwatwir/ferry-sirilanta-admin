@@ -25,9 +25,7 @@ class BookingController extends Controller
     {
         $agentId = env('AGENT_ID');
 
-        if (Auth::user()->role != 'ADMIN') {
-            $agentId = Auth::user()->agent_id;
-        }
+
         $station_from = request()->station_from;
         $station_to = request()->station_to;
         $departdate = request()->departdate;
@@ -61,7 +59,7 @@ class BookingController extends Controller
         join stations st on r.dest_station_id = st.id
         join booking_customers bc on (b.id = bc.booking_id and bc.isdefault = "Y")
         join customers c on bc.customer_id = c.id
-        left join agents ag on b.agent_id = ag.id
+        left join agents ag on b.sub_agent_id = ag.id
 
     where :conditions order by b.created_at DESC';
 
@@ -144,6 +142,10 @@ class BookingController extends Controller
             if ($dateFillter) {
                 $conditionStr .= ' and b.status not in ("delete","void")';
             }
+        }
+
+        if (Auth::user()->role != 'ADMIN') {
+            $conditionStr .= ' and b.user_id = "' . Auth::user()->id . '"';
         }
 
         if ($dateFillter) {
@@ -241,6 +243,8 @@ class BookingController extends Controller
             'infant_passenger' => $request->infant_passenger,
             'discount' => 0,
             'trip_type' => 'O',
+            'user_id' => Auth::user()->id,
+            'sub_agent_id' => Auth::user()->agent_id,
             'customers' => [
                 [
                     'fullname' => $request->fullname ?? '-',
@@ -261,6 +265,8 @@ class BookingController extends Controller
                 ]
             ]
         ];
+
+        //dd($data);
 
         $result = app(BookingService::class)->saveDraft($data);
 

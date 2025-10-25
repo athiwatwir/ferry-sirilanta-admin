@@ -5,15 +5,18 @@ namespace App\View\Components\Station;
 use App\Models\Section;
 use App\Models\Station;
 use Closure;
+
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Selection extends Component
 {
     public $type;
     public $agentId;
+    public $user;
     /**
      * Create a new component instance.
      */
@@ -21,6 +24,8 @@ class Selection extends Component
     {
         $this->type = $type;
         $this->agentId = $agentId;
+
+        $this->user = Auth::user();
     }
 
     /**
@@ -30,22 +35,22 @@ class Selection extends Component
     {
         $stationIds = null;
 
-        if (!empty($this->agentId)) {
-            if ($this->type == 'depart') {
-                $stationIds = DB::table('agent_sub_routes as asr')
-                    ->join('sub_routes as sr', 'asr.sub_route_id', '=', 'sr.id')
-                    ->join('routes as r', 'sr.route_id', '=', 'r.id')
-                    ->where('asr.agent_id', $this->agentId)
-                    ->groupBy('r.depart_station_id')
-                    ->pluck('r.depart_station_id');
-            } elseif ($this->type == 'dest') {
-                $stationIds = DB::table('agent_sub_routes as asr')
-                    ->join('sub_routes as sr', 'asr.sub_route_id', '=', 'sr.id')
-                    ->join('routes as r', 'sr.route_id', '=', 'r.id')
-                    ->where('asr.agent_id', $this->agentId)
-                    ->groupBy('r.dest_station_id')
-                    ->pluck('r.dest_station_id');
-            }
+        $agentId = $this->user['agent_id'];
+
+        if ($this->type == 'depart') {
+            $stationIds = DB::table('agent_sub_routes as asr')
+                ->join('sub_routes as sr', 'asr.sub_route_id', '=', 'sr.id')
+                ->join('routes as r', 'sr.route_id', '=', 'r.id')
+                ->where('asr.agent_id', $agentId)
+                ->groupBy('r.depart_station_id')
+                ->pluck('r.depart_station_id');
+        } elseif ($this->type == 'dest') {
+            $stationIds = DB::table('agent_sub_routes as asr')
+                ->join('sub_routes as sr', 'asr.sub_route_id', '=', 'sr.id')
+                ->join('routes as r', 'sr.route_id', '=', 'r.id')
+                ->where('asr.agent_id', $agentId)
+                ->groupBy('r.dest_station_id')
+                ->pluck('r.dest_station_id');
         }
 
         $sections = Section::where('isactive', 'Y')

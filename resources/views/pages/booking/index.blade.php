@@ -137,13 +137,18 @@
                         </td>
                         <td><small>{{ $booking['bookingno'] }}</small></td>
 
-                        <td><small>{{ $booking['ticketno'] }}</small></td>
+                        <td>
+                            <small>{{ $booking['ticketno'] }}</small>
+                            @if ($booking['agent_name'])
+                            <span class="badge bg-label-dark">{{ $booking['agent_name'] }}</span>
+                            @endif
+                        </td>
 
                         <td class="text-center">
                             {{ $booking['trip_type'] }}
                         </td>
                         <td>
-                            {{ $booking['customer_name'] }}
+                            {{ Str::limit($booking['customer_name'], 15, '...')  }}
                             <div class="d-flex">
                                 <a href=""><i class="icon-base ti tabler-mail"></i></a>
                             </div>
@@ -171,7 +176,10 @@
                                 <x-label-booking-status :status="$booking['status']" /></small>
                         </td>
 
-                        <td class="text-center"><small>{{ $booking['referenceno'] }}</small></td>
+                        <td class="text-center">
+
+                            <small>{{ $booking['referenceno'] }}</small>
+                        </td>
                         <td class="text-center">{{ $booking['amend'] }}</td>
                         <td class="text-center">
                             <x-button.dropdown editUrl="" :deleteUrl="route('booking.destroy',['booking'=>$booking['id']])">

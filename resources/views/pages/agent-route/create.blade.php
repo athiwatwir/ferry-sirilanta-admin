@@ -12,10 +12,10 @@
                 <input type="hidden" name="agent" id="agent" value="{{ $agentId }}">
                 <div class="row">
                     <div class="col">
-                        <x-station.selection name="depart_station_id" label="Station From" :isrequire="false" :selected="$depart_station_id" />
+                        <x-station.selection name="depart_station_id" label="Station From" :isrequire="false" :selected="$depart_station_id" :agentId="env('AGENT_ID')" type="depart" />
                     </div>
                     <div class="col">
-                        <x-station.selection name="dest_station_id" label="Station To" :isrequire="false" :selected="$dest_station_id" />
+                        <x-station.selection name="dest_station_id" label="Station To" :isrequire="false" :selected="$dest_station_id" :agentId="env('AGENT_ID')" type="dest" />
                     </div>
                 </div>
             </form>

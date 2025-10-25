@@ -7,6 +7,12 @@
             <li class="menu-item">
                 <a href="/" class="menu-link">
                     <strong class="text-primary fs-5">SIRILANTA</strong>
+                    @if (Auth::user()->role =='BK')
+                    @php
+                    $agent = session('agent');
+                    @endphp
+                    <strong class="text-warning fs-5"> :Broker {{$agent->name }}</strong>
+                    @endif
                 </a>
             </li>
 

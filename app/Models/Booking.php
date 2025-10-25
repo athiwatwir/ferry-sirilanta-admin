@@ -82,6 +82,7 @@ class Booking extends Model
         'isemailsent',
         'referenceno',
         'agent_id',
+        'sub_agent_id',
         'complete_date',
         'cancel_date',
         'reason',

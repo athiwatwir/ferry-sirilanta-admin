@@ -30,25 +30,15 @@ class AgentRouteController extends Controller
 
         $agent = Agent::whereId($agentId)->first();
 
-        /*
-        $routes = Route::with([
-            'departStation.section',
-        ])
-            ->join('stations as depart', 'routes.depart_station_id', '=', 'depart.id')
-            ->join('sections', 'depart.section_id', '=', 'sections.id')
-            ->where('routes.isactive', 'Y')
-            ->orderBy('sections.sort', 'asc')
-            ->select('routes.*')
-            ->get();
-            */
         $subRouteIds = AgentSubRoute::where('agent_id', $agent->id)->get()->pluck('sub_route_id')->toArray();
+        $apiSubRouteIds = AgentSubRoute::where('agent_id', env('AGENT_ID'))->get()->pluck('sub_route_id')->toArray();
         $routes = Route::select('routes.*')
             ->join('stations as depart', 'routes.depart_station_id', '=', 'depart.id')
             ->with([
                 'departStation',
                 'destStation',
-                'subRoutes' => function ($query) use ($subRouteIds) {
-                    $query->whereNotIn('id', $subRouteIds);
+                'subRoutes' => function ($query) use ($subRouteIds, $apiSubRouteIds) {
+                    $query->whereNotIn('id', $subRouteIds)->whereIn('id', $apiSubRouteIds);
                 }
             ])
             ->orderBy('depart.name_en');
