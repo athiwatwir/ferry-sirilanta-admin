@@ -21,17 +21,21 @@ class BookingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $agentId = env('AGENT_ID');
+        //$conditionStr = 'b.agent_id = "' . $agentId . '"';
 
 
         $station_from = request()->station_from;
         $station_to = request()->station_to;
-        $departdate = request()->departdate;
+
         $ticketno = request()->ticketno;
         $bookingno = request()->bookingno;
+
+        $date_type = request()->date_type;
         $daterange = request()->daterange;
+
         $status = request()->status;
         $searchText = request()->search_text;
 
@@ -43,129 +47,148 @@ class BookingController extends Controller
 
         $agent_id = request()->agent_id;
 
-
-        $sql = 'select
-        b.id,b.created_at,b.bookingno,b.ticketno,b.adult_passenger,b.child_passenger,b.infant_passenger,
-        (b.adult_passenger+b.child_passenger+b.infant_passenger) as total_passenger,
-        b.trip_type,br.type,b.amend,concat(sf.nickname,"-",st.nickname) as route,br.traveldate,b.ispayment,
-        b.book_channel,c.fullname as customer_name,c.email,sr.depart_time,sr.arrival_time,b.totalamt,b.subtotal,
-        b.status,b.ispremiumflex,b.isemailsent,b.referenceno,ag.name as agent_name,ag.code as agent_code
-    from
-        bookings b
-        join booking_sub_routes br on b.id = br.booking_id
-        join sub_routes sr on br.sub_route_id = sr.id
-        join routes r on sr.route_id = r.id
-        join stations sf on r.depart_station_id = sf.id
-        join stations st on r.dest_station_id = st.id
-        join booking_customers bc on (b.id = bc.booking_id and bc.isdefault = "Y")
-        join customers c on bc.customer_id = c.id
-        left join agents ag on b.sub_agent_id = ag.id
-
-    where :conditions order by b.created_at DESC';
-
-        //$startDate = date_format(date_create('2024-01-01'), 'd/m/Y');
-        //$startDate = Carbon::today()->subDays(7)->format('d/m/Y');
-        $startDate = date('d/m/Y');
-        $endDate = date('d/m/Y');
-        $startTravelDate = Carbon::today()->subDays(7)->format('Y-m-d');
-
-        $conditionStr = 'b.agent_id = "' . $agentId . '"';
-        $dateFillter = true;
-
-        if (!is_null($daterange) && $daterange != '') {
-            $dates = explode('-', $daterange);
-            $startDate = trim($dates[0]);
-            $endDate = trim($dates[1]);
-        }
-
-        //$startDateSql = Carbon::createFromFormat('d/m/Y', $startDate)->format('Y-m-d 00:00:00');
-        //$endDateSql = Carbon::createFromFormat('d/m/Y', $endDate)->format('Y-m-d 23:59:59');
-        $startDateSql = '2025-08-01';
-        $endDateSql = '2025-11-30';
-
-        // $conditionStr .= ' and (b.departdate >="' . $startDateSql . '" and b.departdate <="' . $endDateSql . '") ';
+        //dd($request->filled('status'));
 
 
-        if (!empty($searchText)) {
-        }
+        $query = DB::table('bookings as b')
+            ->join('booking_sub_routes as br', 'b.id', '=', 'br.booking_id')
+            ->join('sub_routes as sr', 'br.sub_route_id', '=', 'sr.id')
+            ->leftJoin('routes as r', 'sr.route_id', '=', 'r.id')
+            ->join('stations as sf', 'r.depart_station_id', '=', 'sf.id')
+            ->join('stations as st', 'r.dest_station_id', '=', 'st.id')
+            ->join('booking_customers as bc', function ($join) {
+                $join->on('b.id', '=', 'bc.booking_id')
+                    ->where('bc.isdefault', '=', 'Y');
+            })
+            ->join('customers as c', 'bc.customer_id', '=', 'c.id')
+            ->leftJoin('agents as ag', 'b.agent_id', '=', 'ag.id')
+            ->select(
+                'b.id',
+                'b.created_at',
+                'b.bookingno',
+                'br.ticketno',
+                DB::raw('(b.adult_passenger+b.child_passenger+b.infant_passenger) as total_passenger'),
+                'b.adult_passenger',
+                'b.child_passenger',
+                'b.infant_passenger',
+                'b.trip_type',
+                'br.type',
+                'b.amend',
+                DB::raw('concat(sf.nickname,"-",st.nickname) as route'),
+                'br.traveldate',
+                'b.ispayment',
+                'b.book_channel',
+                'c.fullname as customer_name',
+                'c.email',
+                'sr.depart_time',
+                'sr.arrival_time',
+                'b.totalamt',
+                'b.subtotal',
+                'b.nettamt',
+                'b.status',
+                'b.ispremiumflex',
+                'b.isemailsent',
+                'b.referenceno',
+                'ag.name as agent_name',
+                'ag.code as agent_code',
+                'b.agent_id',
+                'ag.logo as agent_logo'
+            );
 
-
-        if (!is_null($station_from) && $station_from != '') {
-            $dateFillter = false;
-            $conditionStr .= ' and sf.id = "' . $station_from . '"';
-        }
-        if (!is_null($station_to) && $station_to != '') {
-            $dateFillter = false;
-            $conditionStr .= ' and st.id = "' . $station_to . '"';
-        }
-        if (!is_null($departdate) && $departdate != '') {
-            $dateFillter = false;
-            $conditionStr .= ' and br.traveldate = "' . $departdate . '"';
-        }
-        if (!is_null($ticketno) && $ticketno != '') {
-            $dateFillter = false;
-            $conditionStr .= ' and t.ticketno = "' . $ticketno . '"';
-        }
-        if (!is_null($bookingno) && $bookingno != '') {
-            $dateFillter = false;
-            $conditionStr .= ' and b.bookingno = "' . $bookingno . '"';
-        }
-
-        if (!empty($paymentno)) {
-            $dateFillter = false;
-            $conditionStr .= ' and p.paymentno = "' . $paymentno . '"';
-        }
-        if (!empty($customername)) {
-            $dateFillter = false;
-            $conditionStr .= ' and c.fullname like "' . $customername . '%"';
-        }
-        if (!empty($email)) {
-            $dateFillter = false;
-            $conditionStr .= ' and c.email = "' . $email . '"';
-        }
-        if (!empty($bookChannel)) {
-            $conditionStr .= ' and b.book_channel = "' . $bookChannel . '"';
-        }
-        if (!empty($tripType)) {
-            $dateFillter = false;
-            $conditionStr .= ' and b.trip_type = "' . $tripType . '"';
-        }
-
-        if (!empty($agent_id)) {
-            $conditionStr .= ' and b.agent_id = "' . $agent_id . '"';
-        }
-
-        if (!is_null($status) && $status != '') {
-            $dateFillter = false;
-            $conditionStr .= ' and b.status = "' . $status . '"';
+        // $query->where('b.agent_id', $agentId);
+        $bookings = null;
+        // 🔹 ถ้ามี searchText → ค้นหาทุกช่อง
+        if ($request->filled('search_text')) {
+            $text = $request->search_text;
+            $query->where(function ($q) use ($text) {
+                $q->where('br.ticketno', 'like', "%$text%")
+                    ->orWhere('b.bookingno', 'like', "%$text%")
+                    ->orWhere('c.fullname', 'like', "%$text%")
+                    ->orWhere('c.email', 'like', "%$text%");
+            });
+            $bookings = $query->orderBy('b.created_at', 'DESC')->get();
         } else {
-            if ($dateFillter) {
-                $conditionStr .= ' and b.status not in ("delete","void")';
+            // 🔹 เงื่อนไขอื่น ๆ เฉพาะฟิลด์
+            if ($request->filled('station_from')) {
+                $query->where('sf.id', $request->station_from);
+            }
+            if ($request->filled('station_to')) {
+                $query->where('st.id', $request->station_to);
+            }
+
+            if ($request->filled('ticketno')) {
+                $query->where('br.ticketno', 'like', '%' . $request->ticketno . '%');
+            }
+            if ($request->filled('bookingno')) {
+                $query->where('b.bookingno', 'like', '%' . $request->bookingno . '%');
+            }
+            if ($request->filled('customername')) {
+                $query->where('c.fullname', 'like', '%' . $request->customername . '%');
+            }
+            if ($request->filled('email')) {
+                $query->where('c.email', $request->email);
+            }
+            if ($request->filled('book_channel')) {
+                $query->where('b.book_channel', $request->book_channel);
+            }
+            if ($request->filled('trip_type')) {
+                $query->where('b.trip_type', $request->trip_type);
+            }
+            if ($request->filled('agent_id')) {
+                $query->where('b.agent_id', $request->agent_id);
+            }
+            if ($request->filled('status')) {
+                $query->where('b.status', $request->status);
+            } else {
+                $query->whereNotIn('b.status', ['delete', 'void', 'VO']);
+            }
+
+            //Default with last 7 days
+            $startDate = Carbon::now()->subDays(6)->format('Y-m-d');
+            $endDate = Carbon::now()->format('Y-m-d');
+
+            if (!empty($daterange)) {
+                $daterangeConvert = UtilHelper::parseDateRange($daterange);
+                $startDate = $daterangeConvert[0];
+                $endDate = $daterangeConvert[1];
+
+                if ($date_type == 'booking_date') {
+                    $query->whereBetween('b.created_at', [$startDate, $endDate]);
+                    $bookings = $query->orderBy('b.created_at', 'DESC')->get();
+                } else {
+                    $query->whereBetween('br.traveldate', [$startDate, $endDate]);
+                    $bookings = $query->orderBy('br.traveldate', 'DESC')->get();
+                }
+            } else {
+                $query->whereBetween('b.created_at', [$startDate, $endDate]);
+                $bookings = $query->orderBy('b.created_at', 'DESC')->get();
             }
         }
 
-        if (Auth::user()->role != 'ADMIN') {
-            $conditionStr .= ' and b.user_id = "' . Auth::user()->id . '"';
-        }
-
-        if ($dateFillter) {
-            $conditionStr .= ' and (b.created_at >="' . $startDateSql . '" and b.created_at <="' . $endDateSql . '") ';
-        }
-
-
-
-        $sql = str_replace(':conditions', $conditionStr, $sql);
-        //dd($sql);
-        $bookings = DB::select($sql);
         $bookings = json_decode(json_encode($bookings), true);
-
 
         $sections = [];
         $tripTypes = $this->bookingService->getTripType();
         $bookChannels  = $this->bookingService->getBookingChannel();
         $bookingStatus = $this->bookingService->status();
 
-        $agents = Agent::all();
+        $agents = Agent::where('type', 'API')->get();
+
+        if (request()->ispdf == 'Y') {
+            $pdf = Pdf::loadView('pages.booking.pdf.booking', [
+                'bookings' => $bookings,
+                'daterange' => $daterange,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'date_type' => $date_type == 'booking_date' ? 'Booking Date' : 'Travel Date'
+            ])
+                ->setOption([
+                    'dpi' => 150,
+                ])
+                ->setPaper('A4', 'landscape'); // ✅ ใช้ A4 แนวนอน
+
+            return $pdf->stream('booking_list.pdf');
+        }
 
         //dd($bookings);
         return view('pages.booking.index', [
@@ -188,7 +211,10 @@ class BookingController extends Controller
             'tripType' => $tripType,
             'agents' => $agents,
             'agent_id' => $agent_id,
-            'searchText' => $searchText
+            'searchText' => $searchText,
+            'todayDate' => Carbon::now()->format('Y-m-d'),
+            'tmrDate' => Carbon::now()->addDay()->format('Y-m-d'),
+            'date_type' => $date_type
         ]);
     }
 
