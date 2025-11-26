@@ -58,7 +58,7 @@
                 </a>
                 <ul class="menu-sub">
                     <li class="menu-item">
-                        <a href="{{ route('financial.fee') }}" class="menu-link">
+                        <a href="{{ route('settingFee.index') }}" class="menu-link">
                             <i class="menu-icon icon-base ti tabler-receipt-2"></i>
                             <div data-i18n="Analytics">Fee - ค่าธรรมเนียม</div>
                         </a>

@@ -95,7 +95,7 @@ class BookingController extends Controller
                 'ag.logo as agent_logo'
             );
 
-        // $query->where('b.agent_id', $agentId);
+        $query->where('b.agent_id', $agentId);
         $bookings = null;
         // 🔹 ถ้ามี searchText → ค้นหาทุกช่อง
         if ($request->filled('search_text')) {

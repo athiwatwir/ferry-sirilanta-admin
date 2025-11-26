@@ -25,8 +25,7 @@ use App\Http\Controllers\MapTableController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\PromotionController;
-
-
+use App\Http\Controllers\SettingFeeController;
 use App\Models\Section;
 use Illuminate\Support\Facades\Route;
 
@@ -136,7 +135,8 @@ Route::middleware('auth')->group(function () {
         'mapTable' => MapTableController::class,
         'informationText' => InformationTextController::class,
         'financial' => FinancialController::class,
-        'promotion' => PromotionController::class
+        'promotion' => PromotionController::class,
+        'settingFee' => SettingFeeController::class,
 
     ]);
 });
