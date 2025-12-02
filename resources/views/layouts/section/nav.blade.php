@@ -89,7 +89,12 @@
                             <div data-i18n="Analytics">Information Text</div>
                         </a>
                     </li>
-
+                    <li class="menu-item">
+                        <a href="{{ route('tag.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-tag"></i>
+                            <div data-i18n="Analytics">Tag</div>
+                        </a>
+                    </li>
 
                 </ul>
             </li>

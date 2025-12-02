@@ -26,6 +26,7 @@ use App\Http\Controllers\NewsController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\SettingFeeController;
+use App\Http\Controllers\TagController;
 use App\Models\Section;
 use Illuminate\Support\Facades\Route;
 
@@ -137,6 +138,7 @@ Route::middleware('auth')->group(function () {
         'financial' => FinancialController::class,
         'promotion' => PromotionController::class,
         'settingFee' => SettingFeeController::class,
+        'tag' => TagController::class
 
     ]);
 });

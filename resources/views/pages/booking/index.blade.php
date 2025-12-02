@@ -120,8 +120,9 @@
                         <th>Type</th>
                         <th>Customer</th>
                         <th><i class="icon-base ti tabler-friends"></i></th>
-                        <th class="text-end">standard price</th>
-                        <th class="text-end">Total Price</th>
+                        <th class="text-end">List</th>
+                        <th>Processing</th>
+                        <th class="text-end">Nett</th>
                         <th>Route</th>
                         <th>Status</th>
 
@@ -145,9 +146,7 @@
 
                         <td>
                             <small>{{ $booking['ticketno'] }}</small>
-                            @if ($booking['agent_name'])
-                            <span class="badge bg-label-dark">{{ $booking['agent_name'] }}</span>
-                            @endif
+
                         </td>
 
                         <td class="text-center">
@@ -163,7 +162,10 @@
                             {{ $booking['total_passenger'] }}
                         </td>
                         <td class="text-end">
-                            <x-label-price :price="$booking['subtotal']" />
+                            <x-label-price :price="$booking['totalamt']" />
+                        </td>
+                        <td class="text-end">
+                            <x-label-price :price="0" />
                         </td>
                         <td class="text-end">
                             <x-label-price :price="$booking['totalamt']" />

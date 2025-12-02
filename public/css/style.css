@@ -28,6 +28,24 @@ h5 {
     }
 }
 
+.partner-gray {
+    filter: grayscale(100%);
+    opacity: 0.8;
+    /* ถ้าต้องการให้ดูจางลง (ไม่บังคับ) */
+    transition: 0.3s;
+}
+
+.partner-gray:hover {
+    filter: grayscale(0%);
+    /* ชี้แล้วกลับเป็นสี */
+    opacity: 1;
+}
+
+.active-icon {
+    filter: grayscale(0) !important;
+    transform: scale(1.05);
+}
+
 .bai-jamjuree-regular {
     font-family: "Bai Jamjuree", sans-serif;
     font-weight: 400;
@@ -88,7 +106,9 @@ h5 {
     /* เขียวอ่อนแบบ Bootstrap success */
 }
 
-
+.pointer {
+    cursor: pointer;
+}
 
 .btn-hover:hover {
     transform: translateX(-2px) !important;

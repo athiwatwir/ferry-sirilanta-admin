@@ -20,7 +20,7 @@ class SettingFeeController extends Controller
             ]);
         }
 
-        //return
+        return redirect()->route('settingFee.edit', ['settingFee' => $settingFee]);
     }
 
     /**
@@ -53,6 +53,8 @@ class SettingFeeController extends Controller
     public function edit(string $id)
     {
         //
+
+        return view('pages.setting-fee.edit');
     }
 
     /**
