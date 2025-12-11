@@ -46,8 +46,10 @@ class Agent extends Model
         'site_url',
         'parent_agent_id',
         'type',
-        'prefix'
-
+        'prefix',
+        'is_regular_open',
+        'is_child_open',
+        'is_infant_open'
     ];
 
     /*
@@ -69,15 +71,18 @@ class Agent extends Model
         return $this->belongsTo(Wallet::class);
     }
 
-    public function agentSubRoutes()
+   public function agentSubRoutes()
     {
         return $this->hasMany(AgentSubRoute::class, 'agent_id', 'id')
             ->select('agent_sub_routes.*')
             ->join('sub_routes', 'agent_sub_routes.sub_route_id', '=', 'sub_routes.id')
-            ->orderBy('agent_sub_routes.route_id')
+            ->join('routes', 'sub_routes.route_id', '=', 'routes.id')
+            ->join('stations as depart_stations', 'routes.depart_station_id', '=', 'depart_stations.id')
+            ->orderBy('depart_stations.sort', 'asc') // ✅ sort ตาม departStation.sort
             ->orderBy('sub_routes.depart_time')
-            ->with('subRoute');
+            ->with(['subRoute.route.departStation']); // preload ความสัมพันธ์เพื่อใช้ข้อมูลทีหลัง
     }
+
 
     public function activeAgentSubRoutes()
     {

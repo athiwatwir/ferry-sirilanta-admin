@@ -66,6 +66,7 @@ class SubRoute extends Model
         'created_by',
         'updated_by',
         'description',
+        'description2',
         'price',
         'child_price',
         'infant_price',
@@ -118,7 +119,7 @@ class SubRoute extends Model
 
     public function lastSchedules()
     {
-        return $this->hasMany(RouteSchedule::class, 'sub_route_id', 'id')->orderBy('created_at', 'desc')->limit(3);
+        return $this->hasMany(RouteSchedule::class, 'sub_route_id', 'id')->orderBy('created_at', 'desc')->limit(1);
     }
 
     public function agentSubRoutes()

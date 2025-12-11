@@ -31,4 +31,32 @@ class PrintController extends Controller
 
         return $pdf->stream();
     }
+
+
+    public function detail($bookingno)
+    {
+        $booking = Booking::where('bookingno', $bookingno)->with(['agent', 'bookingSubRoutes', 'defaultCustomer'])->first();
+
+        //dd($booking);
+        $statusLabel = BookingService::status();
+
+        $path = public_path('images/banner.jpg');
+        $bannerBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+
+        $viewName = 'print.detail';
+
+
+        $pdf = Pdf::loadView($viewName, [
+            'booking' => $booking,
+            'statusLabel' => $statusLabel,
+            'bannerBase64' => $bannerBase64
+        ])
+            ->setOption([
+                'dpi' => 150,
+
+            ])
+            ->setPaper([0, 0, 288, 432], 'portrait'); // 4x6 นิ้ว (72 dpi)
+
+        return $pdf->stream('detail_' . $bookingno . '.pdf');
+    }
 }

@@ -86,7 +86,8 @@ class Booking extends Model
         'complete_date',
         'cancel_date',
         'reason',
-        'payment_method'
+        'payment_method',
+        'nettamt'
     ];
 
     public function agent()
@@ -98,10 +99,24 @@ class Booking extends Model
     {
         return $this->belongsToMany(Customer::class, 'booking_customers', 'booking_id', 'customer_id')->orderByPivot('isdefault', 'ASC')->OrderBy('type', 'ASC')->withPivot('isdefault');
     }
+    public function defaultCustomer()
+    {
+        return $this->belongsToMany(Customer::class, 'booking_customers', 'booking_id', 'customer_id')->wherePivot('isdefault', 'Y');
+    }
 
 
     public function bookingSubRoutes()
     {
-        return $this->belongsToMany(SubRoute::class, 'booking_sub_routes', 'booking_id', 'sub_route_id')->withPivot('type', 'traveldate', 'price', 'child_price', 'infant_price', 'id', 'ischange')->with('route');
+        return $this->belongsToMany(SubRoute::class, 'booking_sub_routes', 'booking_id', 'sub_route_id')->withPivot('type', 'traveldate', 'price', 'child_price', 'infant_price', 'id', 'ischange', 'ticketno')->with('route');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'booking_id', 'id');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(SystemLog::class, 'booking_id', 'id');
     }
 }

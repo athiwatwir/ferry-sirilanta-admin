@@ -93,4 +93,9 @@ class Station extends Model
     {
         return $this->belongsTo(Section::class);
     }
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'station_tags', 'station_id', 'tag_id');
+    }
 }

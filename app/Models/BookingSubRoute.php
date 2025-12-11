@@ -46,6 +46,7 @@ class BookingSubRoute extends Model
         'child_price',
         'infant_price',
         'booking_id',
-        'ischange'
+        'ischange',
+        'ticketno'
     ];
 }

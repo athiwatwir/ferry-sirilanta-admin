@@ -43,6 +43,7 @@ Route::get('/dashboard', function () {
 
 Route::controller(PrintController::class)->group(function () {
     Route::get('/p/ticket/{bookingno}', 'ticket')->name('print.ticket');
+    Route::get('/p/detail/{bookingno}', 'detail')->name('print.detail');
 });
 
 Route::middleware('auth')->group(function () {

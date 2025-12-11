@@ -53,4 +53,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Station::class);
     }
+
+    public function stations()
+    {
+        return $this->belongsToMany(User::class, 'station_users', 'user_id', 'station_id')->orderByPivot('isdefault', 'ASC')->withPivot('isdefault');
+    }
 }
