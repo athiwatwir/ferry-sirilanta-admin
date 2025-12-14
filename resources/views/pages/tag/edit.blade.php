@@ -16,6 +16,9 @@
                         <x-form.float.input label="Name TH" :isrequire="false" :value="$tag->name_th" :isreadonly="true" />
                     </div>
                     <div class="col-12">
+                        <x-form.float.input label="Badge Text" name="badge_text" :isrequire="false" :value="$tag->badge_text" />
+                    </div>
+                    <div class="col-12">
                         <div class="row">
                             @foreach ($icons as $icon)
                             <div class="col-3 col-lg-2">

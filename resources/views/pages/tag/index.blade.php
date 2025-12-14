@@ -12,6 +12,7 @@
                         <th></th>
                         <th>Name</th>
                         <th>Name TH</th>
+                        <th>Badge Text</th>
                         <th class="text-end">Action</th>
                     </tr>
                 </thead>
@@ -28,6 +29,7 @@
                         </td>
                         <td>{{ $tag->name }}</td>
                         <td>{{ $tag->name_th }}</td>
+                        <td>{{ $tag->badge_text }}</td>
                         <td class="text-end">
                             <x-button.edit :url="route('tag.edit',['tag'=>$tag])" />
 

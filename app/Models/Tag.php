@@ -31,6 +31,7 @@ class Tag extends Model
         'name',
         'name_th',
         'sort',
-        'icon_1'
+        'icon_1',
+        'badge_text'
     ];
 }

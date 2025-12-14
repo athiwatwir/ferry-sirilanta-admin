@@ -74,7 +74,7 @@ class TagController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        Tag::whereId($id)->update(['icon_1' => $request->icon_1]);
+        Tag::whereId($id)->update(['icon_1' => $request->icon_1, 'badge_text' => $request->badge_text]);
         session()->flash('success', __('messages.updated'));
         return redirect()->route('tag.index');
     }
