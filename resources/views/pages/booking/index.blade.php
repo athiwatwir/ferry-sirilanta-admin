@@ -95,7 +95,10 @@
                             <label for="email">Search Text</label>
                         </div>
                     </div>
-                    <div class="col-12 text-end">
+                    <div class="col-4">
+                        <x-button.new text="Create Booking" :href="route('booking.flight')" />
+                    </div>
+                    <div class="col-8 text-end">
                         <a class="btn btn-secondary" href="{{ route('booking.index') }}"><i class="fa-solid fa-arrows-rotate"></i> Clear</a>
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i>
                             Search</button>
