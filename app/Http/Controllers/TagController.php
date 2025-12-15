@@ -86,4 +86,45 @@ class TagController extends Controller
     {
         //
     }
+
+    public function station(string $tagId){
+        $tag = Tag::whereId($tagId)->with(['stations'])->first();
+        //dd($tag->stations);
+        return view('pages.tag.station',[
+            'tag'=>$tag,
+            'breadcrumbs' => [
+                'Tag List' => route('tag.index'),
+                'Station' => ''
+            ],
+            'title'=>'Station in Tag #'.$tag->name
+        ]);
+    }
+
+    public function updateSort(Request $request)
+    {
+        $station_tag_ids = $request->station_tag_ids; // เช่น ["uuid1", "uuid2", "uuid3", ...]
+        $tagId = $request->tag_id;
+
+        if (empty($station_tag_ids)) {
+            return redirect()->back()->with('error', 'No tags provided.');
+        }
+
+        $cases = [];
+        $ids = [];
+
+        foreach ($station_tag_ids as $index => $id) {
+            $id = addslashes($id); // ป้องกัน injection ถ้าเป็น UUID
+            $cases[] = "WHEN id = '$id' THEN " . ($index + 1);
+            $ids[] = "'$id'";
+        }
+
+        $cases_sql = implode(' ', $cases);
+        $ids_sql = implode(',', $ids);
+
+        $query = "UPDATE station_tags SET sort = CASE $cases_sql END WHERE id IN ($ids_sql)";
+        \DB::statement($query);
+
+        session()->flash('success', __('messages.updated'));
+        return redirect()->route('tag.station',['tag'=>$tagId]);
+    }
 }

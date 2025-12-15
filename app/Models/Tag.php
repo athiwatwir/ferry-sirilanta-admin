@@ -34,4 +34,14 @@ class Tag extends Model
         'icon_1',
         'badge_text'
     ];
+
+    /**
+     * Stations associated via the tag_stations pivot table.
+     */
+    public function stations()
+    {
+        return $this->belongsToMany(Station::class, 'station_tags', 'tag_id', 'station_id')
+            ->withPivot('id', 'sort')
+            ->orderBy('station_tags.sort');
+    }
 }

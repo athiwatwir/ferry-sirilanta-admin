@@ -32,7 +32,7 @@
                         <td>{{ $tag->badge_text }}</td>
                         <td class="text-end">
                             <x-button.edit :url="route('tag.edit',['tag'=>$tag])" />
-
+                            <a href="{{ route('tag.station',['tag'=>$tag]) }}"><i class="icon-base ti tabler-list-details"></i></a>
                         </td>
                     </tr>
                     @endforeach

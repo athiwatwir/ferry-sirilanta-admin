@@ -29,6 +29,7 @@ class StationTag extends Model
 
     protected $fillable = [
         'station_id',
-        'tag_id'
+        'tag_id',
+        'sort'
     ];
 }

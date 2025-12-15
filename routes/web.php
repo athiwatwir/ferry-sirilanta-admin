@@ -29,6 +29,7 @@ use App\Http\Controllers\SettingFeeController;
 use App\Http\Controllers\TagController;
 use App\Models\Section;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolver\NotTaggedControllerValueResolver;
 
 /*
 Route::get('/', function () {
@@ -112,6 +113,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/financial/fee', 'fee')->name('financial.fee');
         Route::get('/financial/fare', 'fare')->name('financial.fare');
         Route::get('/financial/promotion', 'promotion')->name('financial.promotion');
+    });
+
+    Route::controller(TagController::class)->group(function () {
+        Route::get('/tag/station/{tag}', 'station')->name('tag.station');
+
+        Route::post('/tag/sort', 'updateSort')->name('tag.updateSort');
     });
 
 
