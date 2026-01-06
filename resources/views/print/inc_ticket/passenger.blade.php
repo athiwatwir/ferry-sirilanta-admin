@@ -1,8 +1,8 @@
 <div class="prow">
-    <table class="ptable w-100" style="width: 100%;">
-        <tr class="bg-gray">
+    <table class="ptable w-100" style="width: 100%; margin-bottom: 20px;">
+        <tr style="background-color: #f0f0f0;">
             <td colspan="8">
-                <h3 style="margin-top:0px;margin-bottom: 0px;">PASSENGER NAME LIST</h3>
+                <h3 style="margin-top:0px;margin-bottom: 0px;padding: 10px;">PASSENGER NAME LIST</h3>
             </td>
         </tr>
         @foreach ($customers as $i => $customer)

@@ -51,15 +51,23 @@ class TagController extends Controller
     {
         $tag = Tag::whereId($id)->first();
         $icons = [
-            env("168_URL") . '/images/icon-station/1.png',
-            env("168_URL") . '/images/icon-station/2.png',
-            env("168_URL") . '/images/icon-station/3.png',
-            env("168_URL") . '/images/icon-station/4.png',
-            env("168_URL") . '/images/icon-station/5.png',
-            env("168_URL") . '/images/icon-station/6.png',
-            env("168_URL") . '/images/icon-station/7.png',
-            env("168_URL") . '/images/icon-station/8.png',
-            env("168_URL") . '/images/icon-station/9.png',
+
+            env("168_URL") . '/images/icon-station/01.png',
+            env("168_URL") . '/images/icon-station/02.png',
+            env("168_URL") . '/images/icon-station/03.png',
+            env("168_URL") . '/images/icon-station/04.png',
+            env("168_URL") . '/images/icon-station/05.png',
+            env("168_URL") . '/images/icon-station/06.png',
+            env("168_URL") . '/images/icon-station/07.png',
+            env("168_URL") . '/images/icon-station/08.png',
+            env("168_URL") . '/images/icon-station/09.png',
+            env("168_URL") . '/images/icon-station/10.png',
+            env("168_URL") . '/images/icon-station/11.png',
+            env("168_URL") . '/images/icon-station/12.png',
+            env("168_URL") . '/images/icon-station/13.png',
+            env("168_URL") . '/images/icon-station/14.png',
+            env("168_URL") . '/images/icon-station/15.png',
+            env("168_URL") . '/images/icon-station/16.png',
         ];
 
         return view('pages.tag.edit', [
@@ -87,16 +95,17 @@ class TagController extends Controller
         //
     }
 
-    public function station(string $tagId){
+    public function station(string $tagId)
+    {
         $tag = Tag::whereId($tagId)->with(['stations'])->first();
         //dd($tag->stations);
-        return view('pages.tag.station',[
-            'tag'=>$tag,
+        return view('pages.tag.station', [
+            'tag' => $tag,
             'breadcrumbs' => [
                 'Tag List' => route('tag.index'),
                 'Station' => ''
             ],
-            'title'=>'Station in Tag #'.$tag->name
+            'title' => 'Station in Tag #' . $tag->name
         ]);
     }
 
@@ -125,6 +134,6 @@ class TagController extends Controller
         \DB::statement($query);
 
         session()->flash('success', __('messages.updated'));
-        return redirect()->route('tag.station',['tag'=>$tagId]);
+        return redirect()->route('tag.station', ['tag' => $tagId]);
     }
 }

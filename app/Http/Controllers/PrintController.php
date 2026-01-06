@@ -15,13 +15,14 @@ class PrintController extends Controller
     public function ticket($bookingno = null)
     {
         $booking = Booking::where('bookingno', $bookingno)->with(['agent', 'bookingSubRoutes', 'bookingCustomers'])->first();
-        $term = Information::where('position', 'TERM_TICKET')->where('agent_id', $booking->agent_id)->first();
+        $term = Information::where('position', 'TERM_TICKET')->where('agent_id', env('AGENT_ID'))->first();
         $statusLabel = BookingService::status();
         $bookings[] = $booking;
 
         Pdf::setOption(['dpi' => 150,  'debugCss' => true]);
         $pdf = Pdf::loadView('print.ticket_v2', ['bookings' => $bookings, 'term' => $term, 'statusLabel' => $statusLabel]);
 
+        //dd($term);
         /*
         if($booking->ispayment=='N'){
             //dd($booking);

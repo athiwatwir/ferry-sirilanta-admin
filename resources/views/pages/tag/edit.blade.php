@@ -21,7 +21,7 @@
                     <div class="col-12">
                         <div class="row">
                             @foreach ($icons as $icon)
-                            <div class="col-3 col-lg-2">
+                            <div class="col-3 col-lg-3">
                                 <img src="{{ $icon }}" data-icon="{{ $icon }}" alt="" class="w-100 partner-gray pointer @if ($icon ==$tag->icon_1 )
                                     active-icon
                                 @endif">

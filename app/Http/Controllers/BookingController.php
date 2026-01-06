@@ -140,30 +140,40 @@ class BookingController extends Controller
             if ($request->filled('status')) {
                 $query->where('b.status', $request->status);
             } else {
-                $query->whereNotIn('b.status', ['delete', 'void', 'VO']);
+                $query->whereNotIn('b.status', ['delete', 'void', 'VO', 'EXPIRED']);
             }
 
             //Default with last 7 days
-            $startDate = Carbon::now()->subDays(6)->format('Y-m-d');
-            $endDate = Carbon::now()->format('Y-m-d');
+            $startDate = Carbon::now()->subDays(6)->startOfDay();
+            $endDate = Carbon::now()->endOfDay();
 
             if (!empty($daterange)) {
                 $daterangeConvert = UtilHelper::parseDateRange($daterange);
-                $startDate = $daterangeConvert[0];
-                $endDate = $daterangeConvert[1];
 
-                if ($date_type == 'booking_date') {
-                    $query->whereBetween('b.created_at', [$startDate, $endDate]);
-                    $bookings = $query->orderBy('b.created_at', 'DESC')->get();
-                } else {
-                    $query->whereBetween('br.traveldate', [$startDate, $endDate]);
-                    $bookings = $query->orderBy('br.traveldate', 'DESC')->get();
-                }
+                // แปลงเป็น Carbon object และกำหนดเวลาให้ชัดเจน
+                $startDate = Carbon::parse($daterangeConvert[0])->startOfDay();
+                $endDate = Carbon::parse($daterangeConvert[1])->endOfDay();
+            }
+
+            // ใช้ date column ตามเงื่อนไข
+            if (!empty($daterange) && $date_type == 'booking_date') {
+                $query->whereBetween('b.created_at', [$startDate, $endDate]);
+                $orderColumn = 'b.created_at';
+            } elseif (!empty($daterange)) {
+                // สำหรับ traveldate ที่เป็น DATE type ไม่ต้องใช้ startOfDay/endOfDay
+                $query->whereBetween('br.traveldate', [
+                    $startDate->format('Y-m-d'),
+                    $endDate->format('Y-m-d')
+                ]);
+                $orderColumn = 'br.traveldate';
             } else {
                 $query->whereBetween('b.created_at', [$startDate, $endDate]);
-                $bookings = $query->orderBy('b.created_at', 'DESC')->get();
+                $orderColumn = 'b.created_at';
             }
+
+            $bookings = $query->orderBy($orderColumn, 'DESC')->get();
         }
+
 
         $bookings = json_decode(json_encode($bookings), true);
 

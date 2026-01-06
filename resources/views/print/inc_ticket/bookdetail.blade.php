@@ -4,7 +4,7 @@
             <td colspan="2">
                 <h3 style="color: #0580c4;margin-top:0px;margin-bottom: 0px;">YOUR BOOKING DETAILS</h3>
             </td>
-            <td colspan="2" class="text-end">
+            <td colspan="2" style="text-align: right;">
                 <h3 style="margin-top:0px;margin-bottom: 0px;">{{
                         ucwords(str_replace('-','
                         ',$booking['trip_type'])) }}
@@ -15,7 +15,7 @@
                 </h3>
             </td>
         </tr>
-        <tr class="bg-gray font-w-700">
+        <tr style="background-color: #f0f0f0;font-weight: 700;padding: 10px;">
             <td class="" style="width: 25%;">ISSUED DATE</td>
             <td class="" style="width: 25%;">INVOICE NO.</td>
             <td class="" style="width: 20%;">TICKET NO.</td>
@@ -32,11 +32,10 @@
             </td>
             <td class="">
                 Adult: {{$booking['adult_passenger']}} &nbsp;&nbsp;
-                Child: {{$booking['child_passenger']}} &nbsp;&nbsp;
-                Infant: {{$booking['infant_passenger']}}
+
             </td>
         </tr>
-        <tr class="bg-gray">
+        <tr style="background-color: #f0f0f0;font-weight: 700;padding: 10px;">
             <td colspan="3" class="font-w-700">
                 {{strtoupper('Contact Information')}}
                 @if ($index==0 && sizeof($customers) >1)
