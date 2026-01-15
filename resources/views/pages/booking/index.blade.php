@@ -129,7 +129,7 @@
                         <th>Route</th>
                         <th>Status</th>
 
-                        <th>Bank/Agent Ref.</th>
+                        <th>Agent Ref.</th>
                         <th>Amend</th>
                         <th class="text-center">Action</th>
                     </tr>
@@ -189,7 +189,7 @@
 
                         <td class="text-center">
 
-                            <small>{{ $booking['referenceno'] }}</small>
+                            <small>{{ $booking['agent_name'] }}</small>
                         </td>
                         <td class="text-center">{{ $booking['amend'] }}</td>
                         <td class="text-center">

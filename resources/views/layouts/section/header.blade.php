@@ -4,6 +4,7 @@
             <a href="/" class="app-brand-link">
 
                 <span class="app-brand-text demo text-primary fw-bold">{{ env('APP_NAME') }}</span>
+
             </a>
 
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-xl-none">

@@ -22,7 +22,7 @@ class PrintController extends Controller
         Pdf::setOption(['dpi' => 150,  'debugCss' => true]);
         $pdf = Pdf::loadView('print.ticket_v2', ['bookings' => $bookings, 'term' => $term, 'statusLabel' => $statusLabel]);
 
-        //dd($term);
+        //dd($bookings);
         /*
         if($booking->ispayment=='N'){
             //dd($booking);

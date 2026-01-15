@@ -27,7 +27,7 @@
             <td>{{ $booking['bookingno'] }}</td>
             <td class="">
 
-                {{ $booking['ticketno'] }}
+                {{ $bookingRoute['pivot']['ticketno'] }}
 
             </td>
             <td class="">

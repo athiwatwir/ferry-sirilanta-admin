@@ -12,6 +12,9 @@
                     $agent = session('agent');
                     @endphp
                     <strong class="text-warning fs-5"> :Broker {{$agent->name }}</strong>
+
+                    @else
+                    <strong class="text-dark fs-5">ADMIN</strong>
                     @endif
                 </a>
             </li>
