@@ -17,11 +17,14 @@ class AgentController extends Controller
     public function index()
     {
         //
-        $agents = Agent::with(['activeAgentSubRoutes'])->where('type', '!=', 'API')->where('parent_agent_id', env("AGENT_ID"))->get();
+        $agents = Agent::where('type', 'AG')->where('parent_agent_id', env("AGENT_ID"))->get();
+
+        $brokers = Agent::where('type', 'BK')->where('parent_agent_id', env("AGENT_ID"))->get();
 
         return view('pages.agent.index', [
             'title' => 'Broker User/Agent Management',
-            'agents' => $agents
+            'agents' => $agents,
+            'brokers' => $brokers
         ]);
     }
 
@@ -30,7 +33,9 @@ class AgentController extends Controller
      */
     public function create()
     {
-        $agent = Agent::whereId(env('AGENT_ID'))->first();
+        $agentApi = Agent::whereId(env('AGENT_ID'))->first();
+        $type = request()->type;
+
 
         return view('pages.agent.create', [
             'title' => 'Create New',
@@ -38,7 +43,8 @@ class AgentController extends Controller
                 'All Broker User/Agent' => route('agent.index'),
                 'Create Agent' => ''
             ],
-            'agent' => $agent
+            'agentApi' => $agentApi,
+            'type' => $type
         ]);
     }
 
@@ -47,34 +53,41 @@ class AgentController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request);
+        //dd($request->all());
         $request->validate([
             'name' => 'required|string',
             'type' => 'required|string',
+            'code' => 'required|string',
+
+            'email' => 'required|email',
+            'password' => 'required|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // สูงสุด 2MB
         ]);
 
         $agent = Agent::create($request->all());
 
-        $ticketSeq = Sequencenumber::create([
-            'name' => 'Ticket ' . $request->code,
-            'type' => 'ticket',
-            'dateformat' => 'ym',
-            'prefix' => $request->prefix,
-            'running_digit' => 4,
-            'agent_id' => $agent->id,
-        ]);
+
         if (!$agent) {
 
             session()->flash('error', __('messages.error'));
             return redirect()->back();
         }
 
+        //create user
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => $request->password,
+            'agent_id' => $agent->id,
+            'role' => $request->type,
+        ]);
+
         //make wallet
         $wallet = Wallet::create([
             'balance' => 0
         ]);
         $agent->wallet_id = $wallet->id;
+
         $agent->update();
 
         if (!empty($request->logo)) {
@@ -107,8 +120,13 @@ class AgentController extends Controller
     {
         $agent = Agent::whereId($id)->first();
 
+        $title = 'View Agent ' . $agent->name;
+        if ($agent->type == 'BK') {
+            $title = 'View Broker ' . $agent->name;
+        }
+
         return view('pages.agent.show', [
-            'title' => 'View Agent ' . $agent->name,
+            'title' => $title,
             'agent' => $agent,
             'breadcrumbs' => [
                 'All agents' => route('agent.index'),
@@ -125,8 +143,13 @@ class AgentController extends Controller
         $agent = Agent::whereId($id)->first();
         $ticketSeq = Sequencenumber::where('type', 'ticket')->where('agent_id', $agent->id)->first();
 
+        $title = 'Edit Agent ' . $agent->name;
+        if ($agent->type == 'BK') {
+            $title = 'Edit Broker ' . $agent->name;
+        }
+
         return view('pages.agent.edit', [
-            'title' => 'Edit Agent',
+            'title' => $title,
             'agent' => $agent,
             'ticketSeq' => $ticketSeq,
             'breadcrumbs' => [
