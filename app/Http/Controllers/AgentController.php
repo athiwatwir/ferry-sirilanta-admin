@@ -88,6 +88,10 @@ class AgentController extends Controller
         ]);
         $agent->wallet_id = $wallet->id;
 
+        if ($request->type == 'AG') {
+            $agent->is_use_wallet = 'Y';
+        }
+
         $agent->update();
 
         if (!empty($request->logo)) {
@@ -210,7 +214,10 @@ class AgentController extends Controller
      */
     public function destroy(string $id)
     {
+        $agent = Agent::whereId($id)->first();
         Agent::whereId($id)->delete();
+        User::where('agent_id', $id)->delete();
+        Wallet::where('id', $agent->wallet_id)->delete();
         session()->flash('success', __('messages.deleted'));
         return redirect()->route('agent.index');
     }

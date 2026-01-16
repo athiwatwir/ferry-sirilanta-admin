@@ -61,7 +61,7 @@ class BookingController extends Controller
                     ->where('bc.isdefault', '=', 'Y');
             })
             ->join('customers as c', 'bc.customer_id', '=', 'c.id')
-            ->leftJoin('agents as ag', 'b.agent_id', '=', 'ag.id')
+            ->leftJoin('agents as ag', 'b.aff_id', '=', 'ag.id')
             ->select(
                 'b.id',
                 'b.created_at',
@@ -134,8 +134,8 @@ class BookingController extends Controller
             if ($request->filled('trip_type')) {
                 $query->where('b.trip_type', $request->trip_type);
             }
-            if ($request->filled('agent_id')) {
-                $query->where('b.agent_id', $request->agent_id);
+            if ($request->filled('aff_id')) {
+                $query->where('b.aff_id', $request->aff_id);
             }
             if ($request->filled('status')) {
                 $query->where('b.status', $request->status);

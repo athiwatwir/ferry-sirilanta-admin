@@ -96,7 +96,7 @@
                         </div>
                     </div>
                     <div class="col-4">
-                        <x-button.new text="Create Booking" :href="route('booking.flight')" />
+                        <x-button.new text="Book Now!" href="{{ env('WEB_URL')}}?aff={{ Auth::user()->agent_id }}" target="_blank" />
                     </div>
                     <div class="col-8 text-end">
                         <a class="btn btn-secondary" href="{{ route('booking.index') }}"><i class="fa-solid fa-arrows-rotate"></i> Clear</a>
