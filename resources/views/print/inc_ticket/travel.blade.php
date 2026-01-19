@@ -1,21 +1,21 @@
 <div class="prow">
     <table class="w-100 ptable" style="padding-bottom: 10px;width: 100%;">
 
-        <tr class="" style="background-color: #f0f0f0;font-weight: 700;padding: 10px;">
-            <td class="w-25" style="">
+        <tr class="" style="background-color: #f0f0f0;font-weight: 700;">
+            <td class="w-25" style="padding: 10px;">
                 DATE OF TRAVELING
             </td>
-            <td class="">
+            <td class="" style="padding: 10px;">
                 FROM:
 
             </td>
-            <td class="">
+            <td class="" style="padding: 10px;">
                 DESTINATION TO:
             </td>
-            <td class="text-center">
+            <td class="text-center" style="padding: 10px;">
                 DEPARTURE
             </td>
-            <td class="text-center">
+            <td class="text-center" style="padding: 10px;">
                 ARRIVAL
             </td>
         </tr>

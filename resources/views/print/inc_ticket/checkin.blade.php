@@ -1,8 +1,8 @@
 <div class="prow">
 
     <table class="w-100 ptable" style="margin-bottom: 5px;">
-        <tr class="bg-gray font-w-700">
-            <td>
+        <tr class="bg-gray font-w-700" style="background-color: #f0f0f0;">
+            <td style="padding: 10px;">
                 <h3 style="margin-top:0px;margin-bottom: 0px;">TRAVEL INFORMATION</h3>
             </td>
         </tr>
@@ -20,6 +20,7 @@
                 @endif
             </td>
         </tr>
+
 
         <tr class="border-gray-top">
             <td style="white-space:wrap;font-size: 9px;">

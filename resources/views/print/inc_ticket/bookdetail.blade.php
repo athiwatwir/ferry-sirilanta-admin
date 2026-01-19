@@ -22,7 +22,7 @@
             <td class="">{{ Str::upper('Number of Passenger:') }}
                 {{($booking['adult_passenger']+$booking['child_passenger']+$booking['infant_passenger'])}}</td>
         </tr>
-        <tr>
+        <tr style="line-height: 1.5;">
             <td><small>{{ date('l d M Y', strtotime($booking['created_at'])) }}</small></td>
             <td>{{ $booking['bookingno'] }}</td>
             <td class="">

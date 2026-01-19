@@ -6,6 +6,7 @@ use App\Http\Controllers\AgentUserController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\InfoImageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PriceStrategyController;
 use App\Http\Controllers\PriceStrategyLineController;
@@ -146,7 +147,8 @@ Route::middleware('auth')->group(function () {
         'financial' => FinancialController::class,
         'promotion' => PromotionController::class,
         'settingFee' => SettingFeeController::class,
-        'tag' => TagController::class
+        'tag' => TagController::class,
+        'infoImage' => InfoImageController::class
 
     ]);
 });

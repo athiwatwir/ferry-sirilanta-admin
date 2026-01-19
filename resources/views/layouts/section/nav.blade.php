@@ -6,16 +6,13 @@
             <!-- Page -->
             <li class="menu-item">
                 <a href="/" class="menu-link">
+                    <strong class="text-primary fs-5">SIRILANTA</strong>
+                    @if (Auth::user()->role =='BK')
                     @php
                     $agent = session('agent');
                     @endphp
-
-                    <strong class="text-primary fs-5">SIRILANTA</strong>
-                    @if (Auth::user()->role =='BK')
-
                     <strong class="text-warning fs-5"> :Broker {{$agent->name }}</strong>
-                    @elseif (Auth::user()->role =='AG')
-                    <strong class="text-success fs-5"> :Agent {{$agent->name }}</strong>
+
                     @else
                     <strong class="text-dark fs-5">ADMIN</strong>
                     @endif
@@ -84,7 +81,7 @@
                     </li>
 
                     <li class="menu-item">
-                        <a href="{{ route('mapTable.index') }}" class="menu-link">
+                        <a href="{{ route('infoImage.index') }}" class="menu-link">
                             <i class="menu-icon icon-base ti tabler-map"></i>
                             <div data-i18n="Analytics">Route Map/Time Table</div>
                         </a>
