@@ -12,10 +12,10 @@
             <td class="" style="padding: 10px;">
                 DESTINATION TO:
             </td>
-            <td class="text-center" style="padding: 10px;">
+            <td class="text-center" style="padding: 10px;text-align: center;">
                 DEPARTURE
             </td>
-            <td class="text-center" style="padding: 10px;">
+            <td style="padding: 10px;text-align: center;">
                 ARRIVAL
             </td>
         </tr>
@@ -39,11 +39,11 @@
                 @endif
             </td>
 
-            <td class="text-center">
+            <td style="text-align: center;">
                 <span class="font-bold-14">{{ date('H:i', strtotime($bookingRoute['depart_time'])) }}</span>
             </td>
-            <td class="text-center">
-                <span class="font-bold-14">{{ date('H:i', strtotime($bookingRoute['arrive_time'])) }}</span>
+            <td style="text-align: center;">
+                <span class="font-bold-14">{{ date('H:i', strtotime($bookingRoute['arrival_time'])) }}</span>
             </td>
         </tr>
     </table>

@@ -5,9 +5,7 @@
                 <h3 style="color: #0580c4;margin-top:0px;margin-bottom: 0px;">YOUR BOOKING DETAILS</h3>
             </td>
             <td colspan="2" style="text-align: right;">
-                <h3 style="margin-top:0px;margin-bottom: 0px;">{{
-                        ucwords(str_replace('-','
-                        ',$booking['trip_type'])) }}
+                <h3 style="margin-top:0px;margin-bottom: 0px;">{{ $tripTypes[$booking['trip_type']] }}
                     ticket
                     @if ($booking['trip_type'] != 'one-way')
                     <span>{{$i+1}}/{{sizeof($bookingRoutes)}}</span>

@@ -58,6 +58,8 @@ $colors = [
 
         @include('print.inc_ticket.passenger')
 
+
+
         @include('print.inc_ticket.footer')
     </div>
     @if(($i+1) != sizeof($bookingRoutes))

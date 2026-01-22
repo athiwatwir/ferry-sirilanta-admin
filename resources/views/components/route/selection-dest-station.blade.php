@@ -1,15 +1,20 @@
-<div>
-    <label for="dest_station_id" class="form-label">Station To</label>
-    <select id="dest_station_id" name="dest_station_id" class="form-select form-select-lg w-100" data-style="btn-default">
-        <option value="">-- ALL --</option>
+@props(['label' => 'Station To', 'name' => 'dest_station_id','selected'=>'','isrequire'=>false,'empty'=>'- ALL -' ])
+
+<div class="form-floating mb-2">
+    <select class="form-select" name="{{ $name }}" id="{{ $name }}" @required($isrequire)>
+        <option value="" selected>{{ $empty }}</option>
         @foreach ($destStations as $index => $stations)
         <optgroup label="{{ $index }}">
-            @foreach ($stations as $station)
-            <option value="{{ $station['id'] }}">
+            @foreach ($stations as $key => $station)
+            <option value="{{ $station['id'] }}" @selected($selected==$station['id'])>
                 <x-station.label-name :station="$station" />
             </option>
             @endforeach
         </optgroup>
         @endforeach
     </select>
+
+    <label for="{{ $name }}">{{ $label }} @if ($isrequire)
+        <strong class="text-danger">*</strong>
+        @endif</label>
 </div>

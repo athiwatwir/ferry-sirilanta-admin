@@ -1,6 +1,6 @@
 <div class="prow">
 
-    <table class="w-100 ptable" style="margin-bottom: 5px;">
+    <table class="w-100 ptable" style="margin-bottom: 5px;width: 100%;">
         <tr class="bg-gray font-w-700" style="background-color: #f0f0f0;">
             <td style="padding: 10px;">
                 <h3 style="margin-top:0px;margin-bottom: 0px;">TRAVEL INFORMATION</h3>
@@ -34,6 +34,8 @@
                 @endif
             </td>
         </tr>
+
+
 
     </table>
 

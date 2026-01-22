@@ -123,9 +123,9 @@
                         <th>Type</th>
                         <th>Customer</th>
                         <th><i class="icon-base ti tabler-friends"></i></th>
-                        <th class="text-end">List</th>
-                        <th>Processing</th>
-                        <th class="text-end">Nett</th>
+                        <th class="text-end">Price</th>
+                        <th>Processing Fee</th>
+                        <th class="text-end">Total Price</th>
                         <th>Route</th>
                         <th>Status</th>
 
@@ -168,10 +168,10 @@
                             <x-label-price :price="$booking['totalamt']" />
                         </td>
                         <td class="text-end">
-                            <x-label-price :price="0" />
+                            <x-label-price :price="$booking['feeamt']" />
                         </td>
                         <td class="text-end">
-                            <x-label-price :price="$booking['totalamt']" />
+                            <x-label-price :price="$booking['payment_totalamt']" />
                         </td>
                         <td class="text-center">
                             {{ $booking['route'] }}

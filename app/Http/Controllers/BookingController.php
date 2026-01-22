@@ -62,6 +62,7 @@ class BookingController extends Controller
             })
             ->join('customers as c', 'bc.customer_id', '=', 'c.id')
             ->leftJoin('agents as ag', 'b.aff_id', '=', 'ag.id')
+            ->leftJoin('payments as p', 'b.id', '=', 'p.booking_id')
             ->select(
                 'b.id',
                 'b.created_at',
@@ -85,6 +86,8 @@ class BookingController extends Controller
                 'b.totalamt',
                 'b.subtotal',
                 'b.nettamt',
+                'p.feeamt',
+                'p.totalamt as payment_totalamt',
                 'b.status',
                 'b.ispremiumflex',
                 'b.isemailsent',
@@ -323,7 +326,7 @@ class BookingController extends Controller
      */
     public function show(string $id)
     {
-        $booking = Booking::whereId($id)->with(['agent', 'bookingSubRoutes', 'bookingCustomers'])->first()->toArray();
+        $booking = Booking::whereId($id)->with(['agent', 'bookingSubRoutes', 'bookingCustomers'])->first();
 
         return view('pages.booking.show', [
             'title' => '',

@@ -46,6 +46,9 @@ Route::get('/dashboard', function () {
 Route::controller(PrintController::class)->group(function () {
     Route::get('/p/ticket/{bookingno}', 'ticket')->name('print.ticket');
     Route::get('/p/detail/{bookingno}', 'detail')->name('print.detail');
+
+    Route::post('/p/report-booking', 'reportBooking')->name('print.reportBooking');
+    Route::post('/p/report-account', 'reportAccount')->name('print.reportAccount');
 });
 
 Route::middleware('auth')->group(function () {
@@ -120,6 +123,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/tag/station/{tag}', 'station')->name('tag.station');
 
         Route::post('/tag/sort', 'updateSort')->name('tag.updateSort');
+    });
+
+    Route::controller(ReportController::class)->group(function () {
+        Route::get('/report', 'index')->name('report.index');
+        Route::get('/report/booking', 'booking')->name('report.booking');
+        Route::post('/report/booking', 'showBooking')->name('report.showBooking');
+
+        Route::get('/report/account', 'account')->name('report.account');
+        Route::post('/report/account', 'showAccount')->name('report.showAccount');
     });
 
 

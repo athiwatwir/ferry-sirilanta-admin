@@ -94,6 +94,12 @@ class Payment extends Model
         'amount',
         'discount',
         'p_feeamt',
-        's_feeamt'
+        's_feeamt',
+        'feeamt'
     ];
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+    }
 }
