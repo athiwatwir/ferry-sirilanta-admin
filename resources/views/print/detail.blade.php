@@ -15,7 +15,7 @@
         body {
             margin: 10px;
             font-size: 12pt;
-            line-height: 1.2;
+            line-height: 1.1;
             font-family: "Inconsolata", sans-serif;
         }
 
@@ -139,7 +139,8 @@
         <div class="line"></div>
         <div class="section">
             Passenger Name:<br><span class="thai">{{ $booking->defaultCustomer[0]->fullname ?? '-' }}</span><br>
-            Phone No. {{ $booking->defaultCustomer[0]->mobile ?? '-' }}
+            Phone No. {{ $booking->defaultCustomer[0]->mobile ?? '-' }}<br>
+            Optional Contact: {{ $booking->defaultCustomer[0]->other_contact ?? '-' }}
         </div>
         <div class="line"></div>
         <div class="section">
@@ -148,7 +149,7 @@
         </div>
     </div>
     <div class="line"></div>
-    <div class="" style="font-size: 14pt;font-weight: bold;text-align: center;">PAID {{ number_format($booking->totalamt ?? 0, 2) }} BAHT</div>
+   <br>
     <div class="" style="font-size: 14pt;font-weight: bold;text-align: center;">Non-Refundable Ticket</div>
 
     @if (!$loop->last)

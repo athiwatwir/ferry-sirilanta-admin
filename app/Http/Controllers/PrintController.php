@@ -47,7 +47,7 @@ class PrintController extends Controller
         //dd($booking);
         $statusLabel = BookingService::status();
 
-        $path = public_path('images/banner.jpg');
+        $path = public_path('images/banner-02.jpg');
         $bannerBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
 
         $viewName = 'print.detail';
