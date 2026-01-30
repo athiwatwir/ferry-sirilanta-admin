@@ -31,7 +31,8 @@
         @if ($booking['note'] != '')
         <tr>
             <td style="white-space:wrap;font-size: 9px;" colspan="7">
-                <p style="margin-bottom: 0px;">Pickup/Dropoff Detail: {{ strip_tags($booking['note']) }}</p>
+                <p style="margin-bottom: 0px;">CUSTOMER NOTE<br>
+                    REQUEST: {{ strip_tags($booking['note'])??'-' }}</p>
             </td>
         </tr>
         @endif

@@ -56,9 +56,9 @@ $colors = [
         @include('print.inc_ticket.travel')
         @include('print.inc_ticket.checkin')
 
-        @include('print.inc_ticket.passenger')
+        <hr style="margin: 3px 0;border: 4px solid #ececec;">
 
-
+        @include('print.inc_ticket.note')
 
         @include('print.inc_ticket.footer')
     </div>

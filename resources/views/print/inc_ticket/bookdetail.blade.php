@@ -13,8 +13,8 @@
                 </h3>
             </td>
         </tr>
-        <tr style="background-color: #f0f0f0;font-weight: 700;padding: 10px;">
-            <td class="" style="width: 25%;">ISSUED DATE</td>
+        <tr style="background-color: #f0f0f0;font-weight: 700;">
+            <td class="" style="width: 25%;padding: 5px;">ISSUED DATE</td>
             <td class="" style="width: 25%;">INVOICE NO.</td>
             <td class="" style="width: 20%;">TICKET NO.</td>
             <td class="">{{ Str::upper('Number of Passenger:') }}
@@ -34,8 +34,8 @@
             </td>
         </tr>
         <tr style="background-color: #f0f0f0;font-weight: 700;padding: 10px;">
-            <td colspan="3" class="font-w-700">
-                {{strtoupper('Contact Information')}}
+            <td colspan="3" class="font-w-700" style="padding: 5px;">
+                {{strtoupper('Contact Person')}}
                 @if ($index==0 && sizeof($customers) >1)
                 <span class="text-main">[Lead passenger]</span>
                 @endif
@@ -49,14 +49,10 @@
             <td colspan="3">
                 Name: <span class="">{{ $firstCustomer['title'] }}.{{ ucfirst($firstCustomer['fullname'])
                         }}</span><br>
-                Passport No.: {{ $firstCustomer['passportno'] }}<br>
-                Nationality: {{ $firstCustomer['country'] }}<br>
+
                 Email: {{ $firstCustomer['email'] }}<br>
-                Tel: {{ $firstCustomer['mobile_code'].$firstCustomer['mobile'] }} / Thai tel: {{
-                    $firstCustomer['mobile_th'] }}
-
-
-
+                Telephone number: {{ $firstCustomer['mobile_code'].$firstCustomer['mobile'] }} <br>
+                Optional Contact:<br> {{ $firstCustomer['other_contact'] }}
             </td>
             <td colspan="1">
                 Total Amount: {{number_format($booking['totalamt']??0)}}THB<br>

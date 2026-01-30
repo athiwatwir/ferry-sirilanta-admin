@@ -156,7 +156,7 @@
                             {{ $booking['trip_type'] }}
                         </td>
                         <td>
-                            {{ Str::limit($booking['customer_name'], 15, '...')  }}
+                            {{ Str::limit($booking['customer_name'], 13, '...')  }}
                             <div class="d-flex">
                                 <a href=""><i class="icon-base ti tabler-mail"></i></a>
                             </div>
@@ -189,7 +189,7 @@
 
                         <td class="text-center">
 
-                            <small>{{ $booking['agent_name'] }}</small>
+                            <small>{{ $booking['referenceno'] }}</small>
                         </td>
                         <td class="text-center">{{ $booking['amend'] }}</td>
                         <td class="text-center">
