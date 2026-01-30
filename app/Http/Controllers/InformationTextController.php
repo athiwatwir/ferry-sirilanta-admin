@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Information;
 use App\Services\InformationService;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,9 @@ class InformationTextController extends Controller
     public function index()
     {
 
-        $informations = app(InformationService::class)->getAll();
+        //$informations = app(InformationService::class)->getAll();
+
+        $informations = Information::where('agent_id', env('AGENT_ID'))->orderBy('position')->get();
 
         return view('pages.informationText.index', [
             'title' => 'Information Text',
