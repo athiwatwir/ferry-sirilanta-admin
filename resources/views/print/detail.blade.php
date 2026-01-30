@@ -96,8 +96,24 @@
 
 
     <div class="mt-2">
-        Ticket No.:{{ $bookingSubRoute->pivot->ticketno }}<br>
-        Boarding for: {{ $booking->adult_passenger+$booking->child_passenger+$booking->infant_passenger }} Passenger(S)
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="text-align: left;">
+                    Ticket No.:{{ $bookingSubRoute->pivot->ticketno }}
+                </td>
+                <td style="text-align: right; white-space: nowrap;">
+                    @if($booking->ispayment=='Y')
+                    <span class="text-danger">PAID</span>
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    Boarding for: {{ $booking->adult_passenger+$booking->child_passenger+$booking->infant_passenger }} Passenger(S)
+                </td>
+            </tr>
+
+        </table>
     </div>
 
     <div class="line"></div>
@@ -107,7 +123,20 @@
         <div class="section" style="width: 100%;">
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                    <td colspan="2">Departure from:<br> {{ $bookingSubRoute->route->departStation->name_en ?? '-' }}</td>
+                    <td style="text-align: left;">
+                       Invoice No.: {{ $booking->bookingno }}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        {{ number_format($booking->totalamt ?? 0, 2) }}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Departure from:<br> {{ $bookingSubRoute->route->departStation->name_en ?? '-' }}
+                        @if(!empty($bookingSubRoute->description))
+                        <br>
+                         <small></small>{{ $bookingSubRoute->description }}</small>
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">
@@ -123,7 +152,12 @@
         <div class="section" style="width: 100%;">
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                    <td colspan="2">Destination to:<br> {{ $bookingSubRoute->route->destStation->name_en ?? '-' }}</td>
+                    <td colspan="2">Destination to:<br> {{ $bookingSubRoute->route->destStation->name_en ?? '-' }}
+                        @if(!empty($bookingSubRoute->description2))
+                        <br>
+                         <small></small>{{ $bookingSubRoute->description2 }}</small>
+                        @endif
+                    </td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">
@@ -144,7 +178,7 @@
         </div>
         <div class="line"></div>
         <div class="section">
-            Branch Office:<br>
+            Branch Office: Online RSVN<br>
             Issue date: {{ \Carbon\Carbon::parse($booking->complete_date)->format('d/m/Y H:i') }}
         </div>
     </div>
