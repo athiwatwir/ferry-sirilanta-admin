@@ -140,7 +140,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;">
-                        Date: {{ \Carbon\Carbon::parse($bookingSubRoute->traveldate)->format('d/m/Y') }}
+                        Date: {{ \Carbon\Carbon::parse($bookingSubRoute->pivot->traveldate)->format('d/m/Y') }}
                     </td>
                     <td style="text-align: right; white-space: nowrap;">
                         Time: {{ $bookingSubRoute->depart_time->format('H:i') ?? '-' }}
@@ -161,7 +161,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;">
-                        Date: {{ \Carbon\Carbon::parse($bookingSubRoute->traveldate)->format('d/m/Y') }}
+                        Date: {{ \Carbon\Carbon::parse($bookingSubRoute->pivot->traveldate)->format('d/m/Y') }}
                     </td>
                     <td style="text-align: right; white-space: nowrap;">
                         Time: {{ $bookingSubRoute->arrival_time->format('H:i') ?? '-' }}
