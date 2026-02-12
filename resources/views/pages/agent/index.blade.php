@@ -77,7 +77,7 @@
                     <tr>
                         <th>#</th>
                         <th>Name</th>
-                        <th>Type</th>
+
                         <th>Code</th>
                         <th></th>
                     </tr>
@@ -92,9 +92,7 @@
 
                         <td data-href="{{ route('agent.show', ['agent' => $item]) }}" class="clickable-row pointer">
                             {{ $item->name }}</td>
-                        <td>
-                            <x-label-agent-type :type="$item->type" />
-                        </td>
+
                         <td data-href="{{ route('agent.show', ['agent' => $item]) }}" class="clickable-row pointer">
                             {{ $item->code }}</td>
 

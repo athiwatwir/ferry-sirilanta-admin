@@ -102,10 +102,24 @@
                 </ul>
             </li>
             <li class="menu-item">
-                <a href="{{ route('agent.index') }}" class="menu-link">
-                    <i class="menu-icon icon-base ti tabler-users-group"></i>
-                    <div data-i18n="Page 2">Broker User/Agent</div>
+                <a href="javascript:void(0)" class="menu-link menu-toggle">
+                    <i class="menu-icon icon-base ti tabler-affiliate"></i>
+                    <div data-i18n="Page 2">Sales Partner</div>
                 </a>
+                <ul class="menu-sub">
+                    <li class="menu-item">
+                        <a href="{{ route('salesPartner.agent') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-users-group"></i>
+                            <div data-i18n="Analytics">Agent</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{{ route('salesPartner.broker') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-shield-check"></i>
+                            <div data-i18n="Analytics">Broker</div>
+                        </a>
+                    </li>
+                </ul>
             </li>
             @endif
 

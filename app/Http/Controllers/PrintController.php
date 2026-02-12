@@ -28,7 +28,7 @@ class PrintController extends Controller
         $pdf = Pdf::loadView('print.ticket_v2', ['bookings' => $bookings, 'term' => $term, 'statusLabel' => $statusLabel, 'tripTypes' => $tripTypes]);
 
 
-        //dd($bookings);
+        //dd($term);
         /*
         if($booking->ispayment=='N'){
             //dd($booking);

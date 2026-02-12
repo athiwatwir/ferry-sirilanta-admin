@@ -26,6 +26,7 @@ use App\Http\Controllers\MapTableController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\PromotionController;
+use App\Http\Controllers\SalesPartnerController;
 use App\Http\Controllers\SettingFeeController;
 use App\Http\Controllers\TagController;
 use App\Models\Section;
@@ -134,6 +135,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/report/account', 'showAccount')->name('report.showAccount');
     });
 
+    Route::controller(SalesPartnerController::class)->group(function () {
+        Route::get('/sales-partner/agent', 'agent')->name('salesPartner.agent');
+        Route::get('/sales-partner/broker', 'broker')->name('salesPartner.broker');
+    });
+
 
 
 
@@ -160,7 +166,8 @@ Route::middleware('auth')->group(function () {
         'promotion' => PromotionController::class,
         'settingFee' => SettingFeeController::class,
         'tag' => TagController::class,
-        'infoImage' => InfoImageController::class
+        'infoImage' => InfoImageController::class,
+        'salesPartner' => SalesPartnerController::class
 
     ]);
 });

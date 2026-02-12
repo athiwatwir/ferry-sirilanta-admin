@@ -23,7 +23,8 @@ class User extends Authenticatable
         'password',
         'station_id',
         'role',
-        'agent_id'
+        'agent_id',
+        'sales_partner_id'
     ];
 
     /**
@@ -57,5 +58,10 @@ class User extends Authenticatable
     public function stations()
     {
         return $this->belongsToMany(User::class, 'station_users', 'user_id', 'station_id')->orderByPivot('isdefault', 'ASC')->withPivot('isdefault');
+    }
+
+    public function salesPartner()
+    {
+        return $this->belongsTo(SalesPartner::class);
     }
 }

@@ -4,7 +4,7 @@
 <x-card>
     <div class="row">
         <div class="col-12 text-end">
-            <x-button.new />
+            <x-button.new :href="route('informationText.create')" />
         </div>
     </div>
 
@@ -22,10 +22,15 @@
                 <tbody>
                     @foreach ($informations as $item)
                     <tr>
-                        <td>{{ $item['position'] }}</td>
+                        <td>{{ $positions[$item['position']] }}</td>
                         <td>{{ $item['title'] }}</td>
                         <td>{!! $item['body'] !!}</td>
-                        <td></td>
+                        <td>
+                            <div class="d-inline-flex gap-2">
+                                <x-button.edit :url="route('informationText.edit', $item['id'])" />
+                                <x-button.delete :url="route('informationText.destroy', $item['id'])" />
+                            </div>
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>
