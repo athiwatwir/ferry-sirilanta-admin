@@ -10,6 +10,15 @@ use Illuminate\Http\Request;
 
 class SalesPartnerController extends Controller
 {
+
+    public static function getSalesPartneTypes()
+    {
+        return [
+            'agent' => 'Agent',
+            'broker' => 'Broker',
+            'employee' => 'Employee',
+        ];
+    }
     /**
      * Display a listing of the resource.
      */
@@ -82,24 +91,24 @@ class SalesPartnerController extends Controller
                 'sales_partner_id' => $salesPartner->id,
             ]);
 
-            if ($salesPartner->type == 'broker') {
+            if ($salesPartner->type == 'employee') {
                 BrokerPoint::create([
                     'sales_partner_id' => $salesPartner->id,
                     'balance' => 0,
                 ]);
-            } else {
+                return redirect()->route('employee.index');
+            } else if ($salesPartner->type == 'broker') {
                 AgentAccount::create([
                     'sales_partner_id' => $salesPartner->id,
-                    'type' => $request->agent_account['type'],
+                    'type' => 'POST',
                 ]);
-            }
 
-            session()->flash('success', __('messages.saved'));
-
-            if ($request->type == 'agent') {
-                return redirect()->route('salesPartner.agent');
-            } else {
-                return redirect()->route('salesPartner.broker');
+                return redirect()->route('broker.index');
+            } else if ($salesPartner->type == 'agent') {
+                AgentAccount::create([
+                    'sales_partner_id' => $salesPartner->id,
+                    'type' => 'PRE',
+                ]);
             }
         } else {
             session()->flash('error', __('messages.error'));

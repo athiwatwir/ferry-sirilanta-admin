@@ -4,8 +4,10 @@ use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AgentRouteController;
 use App\Http\Controllers\AgentUserController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BrokerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InfoImageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PriceStrategyController;
@@ -95,11 +97,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/demo/route', 'route')->name('demo.route');
     });
 
+    /*
     Route::controller(AgentController::class)->group(function () {
         Route::get('/agent/route/{agent}', 'route')->name('agent.route');
         Route::get('/agent/wallet/{agent}', 'wallet')->name('agent.wallet');
         Route::get('/agent/user/{agent}', 'user')->name('agent.user');
     });
+    */
 
     Route::controller(WalletsController::class)->group(function () {
         Route::post('/wallet/add-balance/{wallet}', 'addBalance')->name('wallet.addBalance');
@@ -167,7 +171,9 @@ Route::middleware('auth')->group(function () {
         'settingFee' => SettingFeeController::class,
         'tag' => TagController::class,
         'infoImage' => InfoImageController::class,
-        'salesPartner' => SalesPartnerController::class
+        'salesPartner' => SalesPartnerController::class,
+        'broker' => BrokerController::class,
+        'employee' => EmployeeController::class
 
     ]);
 });

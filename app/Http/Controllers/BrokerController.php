@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SalesPartner;
 use Illuminate\Http\Request;
 
-class AgentController extends Controller
+class BrokerController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        $brokers = SalesPartner::with('user')->where('type', 'broker')->where('agent_id', env('AGENT_ID'))->get();
+        return view('pages.broker.index', [
+            'title' => 'Broker',
+            'brokers' => $brokers
+        ]);
     }
 
     /**
@@ -20,6 +25,9 @@ class AgentController extends Controller
     public function create()
     {
         //
+        return view('pages.broker.create', [
+            'title' => 'Create Broker'
+        ]);
     }
 
     /**
@@ -36,6 +44,15 @@ class AgentController extends Controller
     public function show(string $id)
     {
         //
+        $broker = SalesPartner::with('user', 'agentAccount')->find($id);
+        return view('pages.broker.show', [
+            'title' => 'Broker > ' . $broker->name,
+            'broker' => $broker,
+            'breadcrumbs' => [
+                'All Broker' => route('broker.index'),
+                'View' => ''
+            ],
+        ]);
     }
 
     /**

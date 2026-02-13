@@ -47,4 +47,9 @@ class SalesPartner extends Model
     {
         return $this->hasOne(User::class, 'sales_partner_id', 'id');
     }
+
+    public function agentAccount()
+    {
+        return $this->hasOne(AgentAccount::class, 'sales_partner_id', 'id');
+    }
 }

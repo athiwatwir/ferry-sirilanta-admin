@@ -8,10 +8,11 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 /**
  * Class AgentAccount
- * 
+ *
  * @property string $id
  * @property string $sales_partner_id
  * @property string $type
@@ -25,20 +26,21 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AgentAccount extends Model
 {
-	protected $table = 'agent_accounts';
-	public $incrementing = false;
+    use HasUuids;
+    protected $table = 'agent_accounts';
+    public $incrementing = false;
 
-	protected $casts = [
-		'credit_balance' => 'float',
-		'wallet_balance' => 'float',
-		'credit_limit' => 'float'
-	];
+    protected $casts = [
+        'credit_balance' => 'float',
+        'wallet_balance' => 'float',
+        'credit_limit' => 'float'
+    ];
 
-	protected $fillable = [
-		'sales_partner_id',
-		'type',
-		'credit_balance',
-		'wallet_balance',
-		'credit_limit'
-	];
+    protected $fillable = [
+        'sales_partner_id',
+        'type',
+        'credit_balance',
+        'wallet_balance',
+        'credit_limit'
+    ];
 }
