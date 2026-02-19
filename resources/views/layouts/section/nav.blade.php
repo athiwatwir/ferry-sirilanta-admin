@@ -7,14 +7,12 @@
             <li class="menu-item">
                 <a href="/" class="menu-link">
                     <strong class="text-primary fs-5">SIRILANTA</strong>
-                    @if (Auth::user()->role =='BK')
-                    @php
-                    $agent = session('agent');
-                    @endphp
-                    <strong class="text-warning fs-5"> :Broker {{$agent->name }}</strong>
+                    @if (Auth::user()->role =='ADMIN')
+
+                    <strong class="text-dark fs-5">ADMIN</strong>
 
                     @else
-                    <strong class="text-dark fs-5">ADMIN</strong>
+                    <strong class="text-dark fs-5">{{ Auth::user()->role }} {{ Auth::user()->name }}</strong>
                     @endif
                 </a>
             </li>
@@ -26,6 +24,12 @@
                     <div data-i18n="Page 1">Bookings</div>
                 </a>
             </li>
+
+            @if (Auth::user()->role =='agent')
+            <li class="menu-item">
+                <x-wallet-menu />
+            </li>
+            @endif
 
             @if (Auth::user()->role =='ADMIN')
 

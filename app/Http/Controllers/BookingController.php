@@ -27,6 +27,7 @@ class BookingController extends Controller
         //$conditionStr = 'b.agent_id = "' . $agentId . '"';
 
 
+
         $station_from = request()->station_from;
         $station_to = request()->station_to;
 
@@ -99,6 +100,15 @@ class BookingController extends Controller
             );
 
         $query->where('b.agent_id', $agentId);
+
+        if (Auth::user()->role != 'ADMIN') {
+            //dd(Auth::user());
+            $salesPartnerId = Auth::user()->sales_partner_id;
+
+            $query->where('b.sales_partner_id', $salesPartnerId);
+        }
+
+
         $bookings = null;
         // 🔹 ถ้ามี searchText → ค้นหาทุกช่อง
         if ($request->filled('search_text')) {

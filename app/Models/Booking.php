@@ -87,7 +87,9 @@ class Booking extends Model
         'cancel_date',
         'reason',
         'payment_method',
-        'nettamt'
+        'nettamt',
+        'expires_at',
+        'sales_partner_id'
     ];
 
     public function agent()

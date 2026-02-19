@@ -2,22 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SalesPartner;
+use App\Models\AgentAccount;
 use Illuminate\Http\Request;
 
-class AgentController extends Controller
+class AgentAccountController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-
-        $agents = SalesPartner::with(['user', 'agentAccount'])->where('type', 'agent')->where('agent_id', env('AGENT_ID'))->get();
-        return view('pages.agent.index', [
-            'title' => 'Agent',
-            'agents' => $agents
-        ]);
+        //
     }
 
     /**
@@ -25,9 +20,7 @@ class AgentController extends Controller
      */
     public function create()
     {
-        return view('pages.agent.create', [
-            'title' => 'Create Agent'
-        ]);
+        //
     }
 
     /**
@@ -41,18 +34,15 @@ class AgentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(AgentAccount $agentAccount)
     {
-        //
-        $agent = SalesPartner::with('agentAccount', 'user')->find($id);
 
-        return view('pages.agent.show', [
-            'title' => 'Agent > ' . $agent->name,
-            'breadcrumbs' => [
-                'All Agent' => route('agent.index'),
-                'View' => ''
-            ],
-            'agent' => $agent
+        //dd($agentAccount);
+        // $agentAccount = AgentAccount::whereId()
+        return view('pages.agent-account.show', [
+            'title' => 'Wallet',
+
+            'agentAccount' => $agentAccount
         ]);
     }
 

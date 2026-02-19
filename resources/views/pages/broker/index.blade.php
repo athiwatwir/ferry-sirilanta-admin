@@ -16,7 +16,8 @@
             <tr>
                 <th>#</th>
                 <th>Name</th>
-                <th></th>
+                <th>Code</th>
+                <th>Email</th>
                 <th></th>
             </tr>
         </thead>
@@ -25,7 +26,8 @@
             <tr>
                 <td>{{ $loop->iteration }}</td>
                 <td>{{ $broker->name }}</td>
-                <td></td>
+                <td>{{ $broker->code }}</td>
+                <td>{{ $broker->user->email }}</td>
                 <td class="text-end">
                     <a href="{{ route('broker.show', ['broker' => $broker]) }}" class="btn btn-outline-secondary ">View</a>
                 </td>

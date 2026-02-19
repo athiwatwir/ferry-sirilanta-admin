@@ -89,6 +89,8 @@ class SalesPartnerController extends Controller
                 'email' => $request->user['email'],
                 'password' => $request->user['password'],
                 'sales_partner_id' => $salesPartner->id,
+                'agent_id' => $data['agent_id'],
+                'role' => $salesPartner->type
             ]);
 
             if ($salesPartner->type == 'employee') {
@@ -109,6 +111,8 @@ class SalesPartnerController extends Controller
                     'sales_partner_id' => $salesPartner->id,
                     'type' => 'PRE',
                 ]);
+
+                return redirect()->route('agent.index');
             }
         } else {
             session()->flash('error', __('messages.error'));

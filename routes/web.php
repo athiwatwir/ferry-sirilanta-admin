@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgentAccountController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AgentRouteController;
 use App\Http\Controllers\AgentUserController;
@@ -144,6 +145,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/sales-partner/broker', 'broker')->name('salesPartner.broker');
     });
 
+    Route::controller(BrokerController::class)->group(function () {
+        Route::get('/broker/user/{broker}', 'user')->name('broker.user');
+    });
+
 
 
 
@@ -173,7 +178,8 @@ Route::middleware('auth')->group(function () {
         'infoImage' => InfoImageController::class,
         'salesPartner' => SalesPartnerController::class,
         'broker' => BrokerController::class,
-        'employee' => EmployeeController::class
+        'employee' => EmployeeController::class,
+        'agentAccount' => AgentAccountController::class
 
     ]);
 });

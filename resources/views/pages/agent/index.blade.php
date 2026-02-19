@@ -7,7 +7,7 @@
 
         </div>
         <div class="col-3 col-lg-6 text-end">
-            <x-button.new :href="route('employee.create', ['type' => 'employee'])" />
+            <x-button.new :href="route('agent.create', ['type' => 'agent'])" />
         </div>
     </div>
     <hr>
@@ -18,20 +18,22 @@
                 <th>Name</th>
                 <th>Code</th>
                 <th>Email</th>
-                <th class="text-center">Point</th>
+                <th class="text-end">Wallet Balance</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($brokers as $broker)
+            @foreach ($agents as $agent)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ $broker->name }}</td>
-                <td>{{ $broker->code }}</td>
-                <td>{{ $broker->user->email }}</td>
-                <td class="text-center">{{ $broker->brokerPoint->balance }}</td>
+                <td>{{ $agent->name }}</td>
+                <td>{{ $agent->code }}</td>
+                <td>{{ $agent->user->email }}</td>
                 <td class="text-end">
-                    <a href="{{ route('employee.show', ['employee' => $broker]) }}" class="btn btn-outline-secondary ">View</a>
+                    <x-label-price :price="$agent->agentAccount->wallet_balance" />
+                </td>
+                <td class="text-end">
+                    <a href="{{ route('agent.show', ['agent' => $agent]) }}" class="btn btn-outline-secondary ">View</a>
                 </td>
             </tr>
             @endforeach

@@ -7,7 +7,7 @@
         <x-card>
             <div class="row">
 
-                <div class="col-12 col-lg-8">
+                <div class="col-12 col-lg-6 border-end">
                     <h4>Broker Information</h4>
                     <hr>
                     <div class="row">
@@ -24,8 +24,10 @@
                             <p>{{ $broker->user->email }}</p>
                         </div>
                     </div>
+                </div>
 
-
+                <div class="col-12 col-lg-6">
+                    <a href="" class="btn btn-outline-primary">พนักงานขาย</a>
                 </div>
             </div>
         </x-card>
