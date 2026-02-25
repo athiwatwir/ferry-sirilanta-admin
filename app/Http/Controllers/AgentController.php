@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgentAccountTransection;
 use App\Models\SalesPartner;
 use Illuminate\Http\Request;
 
@@ -12,11 +13,29 @@ class AgentController extends Controller
      */
     public function index()
     {
-
         $agents = SalesPartner::with(['user', 'agentAccount'])->where('type', 'agent')->where('agent_id', env('AGENT_ID'))->get();
+
+        $accountIds = $agents->pluck('agentAccount.id')->filter()->values();
+        $pendingCounts = $accountIds->isNotEmpty()
+            ? AgentAccountTransection::where('type', 'topup')
+                ->where('isapproved', 'N')
+                ->whereIn('agent_account_id', $accountIds)
+                ->selectRaw('agent_account_id, count(*) as cnt')
+                ->groupBy('agent_account_id')
+                ->pluck('cnt', 'agent_account_id')
+            : collect();
+
+        $pendingTopUpTotal = $pendingCounts->sum();
+        foreach ($agents as $agent) {
+            $agent->pending_topup_count = $agent->agentAccount
+                ? (int) ($pendingCounts[$agent->agentAccount->id] ?? 0)
+                : 0;
+        }
+
         return view('pages.agent.index', [
             'title' => 'Agent',
-            'agents' => $agents
+            'agents' => $agents,
+            'pendingTopUpTotal' => $pendingTopUpTotal,
         ]);
     }
 
@@ -43,8 +62,11 @@ class AgentController extends Controller
      */
     public function show(string $id)
     {
-        //
-        $agent = SalesPartner::with('agentAccount', 'user')->find($id);
+        $agent = SalesPartner::with(['agentAccount.transections' => fn ($q) => $q->orderBy('created_at', 'desc')], 'user')->find($id);
+
+        $transactions = $agent->agentAccount
+            ? $agent->agentAccount->transections->where('type', 'topup')
+            : collect();
 
         return view('pages.agent.show', [
             'title' => 'Agent > ' . $agent->name,
@@ -52,8 +74,37 @@ class AgentController extends Controller
                 'All Agent' => route('agent.index'),
                 'View' => ''
             ],
-            'agent' => $agent
+            'agent' => $agent,
+            'transactions' => $transactions,
         ]);
+    }
+
+    /**
+     * อนุมัติรายการเติมเงิน และอัพเดท wallet_balance ใน AgentAccount
+     */
+    public function approveTopUp(string $agent, string $transaction)
+    {
+        $agentModel = SalesPartner::with('agentAccount')->findOrFail($agent);
+        if (!$agentModel->agentAccount) {
+            return redirect()->route('agent.show', $agent)->with('error', 'ไม่พบบัญชี Agent');
+        }
+
+        $tx = AgentAccountTransection::where('id', $transaction)
+            ->where('agent_account_id', $agentModel->agentAccount->id)
+            ->where('type', 'topup')
+            ->firstOrFail();
+
+        if (($tx->isapproved ?? '') === 'Y') {
+            return redirect()->route('agent.show', $agent)->with('warning', 'รายการนี้อนุมัติแล้ว');
+        }
+
+        $tx->update(['isapproved' => 'Y']);
+
+        $account = $agentModel->agentAccount;
+        $account->wallet_balance = ($account->wallet_balance ?? 0) + $tx->amount;
+        $account->save();
+
+        return redirect()->route('agent.show', $agent)->with('success', 'อนุมัติเติมเงินเรียบร้อย และอัพเดทยอด wallet แล้ว');
     }
 
     /**

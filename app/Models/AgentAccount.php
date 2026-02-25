@@ -43,4 +43,14 @@ class AgentAccount extends Model
         'wallet_balance',
         'credit_limit'
     ];
+
+    public function salesPartner()
+    {
+        return $this->belongsTo(SalesPartner::class, 'sales_partner_id', 'id');
+    }
+
+    public function transections()
+    {
+        return $this->hasMany(AgentAccountTransection::class, 'agent_account_id', 'id');
+    }
 }

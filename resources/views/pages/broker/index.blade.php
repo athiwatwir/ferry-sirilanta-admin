@@ -18,6 +18,8 @@
                 <th>Name</th>
                 <th>Code</th>
                 <th>Email</th>
+                <th class="text-end">Credit Used</th>
+                <th class="text-end">Credit Limit</th>
                 <th></th>
             </tr>
         </thead>
@@ -27,9 +29,15 @@
                 <td>{{ $loop->iteration }}</td>
                 <td>{{ $broker->name }}</td>
                 <td>{{ $broker->code }}</td>
-                <td>{{ $broker->user->email }}</td>
+                <td>{{ $broker->user?->email ?? '-' }}</td>
                 <td class="text-end">
-                    <a href="{{ route('broker.show', ['broker' => $broker]) }}" class="btn btn-outline-secondary ">View</a>
+                    <x-label-price :price="$broker->agentAccount?->credit_balance ?? 0" />
+                </td>
+                <td class="text-end">
+                    <x-label-price :price="$broker->agentAccount?->credit_limit ?? 0" />
+                </td>
+                <td class="text-end">
+                    <a href="{{ route('broker.show', ['broker' => $broker]) }}" class="btn btn-outline-secondary">View</a>
                 </td>
             </tr>
             @endforeach

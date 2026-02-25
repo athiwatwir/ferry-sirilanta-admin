@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
 
 html,
 body {
@@ -11,7 +11,7 @@ h2,
 h3,
 h4,
 h5 {
-    font-family: "Bai Jamjuree", sans-serif;
+    font-family: "Google Sans", sans-serif;
     font-weight: 700 !important;
     font-style: normal;
 }
@@ -26,6 +26,18 @@ h5 {
     .container {
         max-width: 98% !important;
     }
+}
+
+.f-default {
+    font-family: "Google Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.f-default-bold {
+    font-family: "Google Sans", sans-serif;
+    font-weight: 700;
+    font-style: normal;
 }
 
 .partner-gray {
@@ -46,17 +58,6 @@ h5 {
     transform: scale(1.05);
 }
 
-.bai-jamjuree-regular {
-    font-family: "Bai Jamjuree", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-}
-
-.bai-jamjuree-bold {
-    font-family: "Bai Jamjuree", sans-serif;
-    font-weight: 700;
-    font-style: normal;
-}
 
 .pointer {
     cursor: pointer;

@@ -40,17 +40,45 @@
                     <x-table.datatabble>
                         <thead>
                             <tr>
-                                <th>time</th>
-                                <th>Document No</th>
+                                <th>เวลา</th>
                                 <th>Agent</th>
                                 <th>Top Up Amt</th>
                                 <th>Ref.</th>
-                                <th></th>
+                                <th>สลิป</th>
+                                <th class="text-center">สถานะ</th>
                             </tr>
                         </thead>
-
                         <tbody>
-
+                            @forelse($transactions as $tx)
+                            <tr>
+                                <td>{{ $tx->created_at?->format('d/m/Y H:i') }}</td>
+                                <td>{{ $agentAccount->salesPartner?->name ?? '-' }}</td>
+                                <td>
+                                    <x-label-price :price="$tx->amount" />
+                                </td>
+                                <td>{{ $tx->description ?? '-' }}</td>
+                                <td>
+                                    @if($tx->image_path)
+                                    <a href="{{ route('agentAccount.slip', $tx) }}" target="_blank" class="btn btn-sm btn-outline-primary">ดูสลิป</a>
+                                    @else
+                                    -
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    @if(($tx->isapproved ?? '') === 'Y')
+                                    <span class="badge bg-success">อนุมัติแล้ว</span>
+                                    @elseif(($tx->isapproved ?? '') === 'N')
+                                    <span class="badge bg-warning text-dark">รออนุมัติ</span>
+                                    @else
+                                    <span class="badge bg-secondary">{{ $tx->isapproved ?? '-' }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">ยังไม่มีรายการ</td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </x-table.datatabble>
                 </div>
@@ -63,11 +91,19 @@
 
 @section('modal')
 
-<x-modal id="modal-add-balance" title="Top up">
-    <x-form type="modal" action="#">
+<x-modal id="modal-add-balance" title="เติมเงิน (Top up)">
+    <x-form type="modal" :action="route('agentAccount.topUp', $agentAccount)" method="POST">
         <div class="row">
+            <div class="col-12 mb-3">
+                <label class="form-label">สลิปการโอน <strong class="text-danger">*</strong></label>
+                <input type="file" class="form-control" name="slip" accept="image/*" required>
+                <div class="form-text">รองรับ JPG, PNG, GIF สูงสุด 5 MB</div>
+            </div>
+            <div class="col-12 mb-3">
+                <x-form.float.input name="amount" label="จำนวนเงิน (THB)" type="number" :isrequire="true" placeholder="0.00" />
+            </div>
             <div class="col-12">
-                <x-form.float.input name="balance" label="Amount" />
+                <x-form.float.input name="description" label="Ref. / หมายเหตุ" :isrequire="false" placeholder="อ้างอิงการโอน (ถ้ามี)" />
             </div>
         </div>
     </x-form>

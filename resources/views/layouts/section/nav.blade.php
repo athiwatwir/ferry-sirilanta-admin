@@ -4,15 +4,15 @@
 
         <ul class="menu-inner py-1">
             <!-- Page -->
-            <li class="menu-item">
-                <a href="/" class="menu-link">
-                    <strong class="text-primary fs-5">SIRILANTA</strong>
+            <li class="menu-item ">
+                <a href="/" class="menu-link ps-0">
+                    <strong class="text-primary fs-5 f-default-bold">SIRILANTA</strong>
                     @if (Auth::user()->role =='ADMIN')
 
-                    <strong class="text-dark fs-5">ADMIN</strong>
+                    <strong class="text-dark fs-5 f-default-bold">ADMIN</strong>
 
                     @else
-                    <strong class="text-dark fs-5">{{ Auth::user()->role }} {{ Auth::user()->name }}</strong>
+                    <strong class="text-dark fs-5 ms-2 f-default-bold"> {{ strtoupper(Auth::user()->role) }} {{ Auth::user()->name }}</strong>
                     @endif
                 </a>
             </li>
@@ -28,6 +28,24 @@
             @if (Auth::user()->role =='agent')
             <li class="menu-item">
                 <x-wallet-menu />
+            </li>
+            @endif
+
+            @if (Auth::user()->role =='employee')
+            <li class="menu-item ">
+                <a href="{{ route('employee.point') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-clock-bitcoin"></i>
+                    <div data-i18n="Page 1">Your Point</div>
+                </a>
+            </li>
+            @endif
+
+            @if (Auth::user()->role =='broker')
+            <li class="menu-item">
+                <a href="{{ route('broker.credit') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-clock-bitcoin"></i>
+                    <div data-i18n="Page 1">Your Crdit</div>
+                </a>
             </li>
             @endif
 

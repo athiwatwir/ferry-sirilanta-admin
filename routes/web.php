@@ -147,10 +147,24 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(BrokerController::class)->group(function () {
         Route::get('/broker/user/{broker}', 'user')->name('broker.user');
+        Route::get('/broker/credit', 'credit')->name('broker.credit');
+        Route::patch('/broker/{broker}/credit-limit', 'updateCreditLimit')->name('broker.updateCreditLimit');
     });
 
+    Route::controller(EmployeeController::class)->group(function () {
+        Route::get('/employee/point', 'point')->name('employee.point');
+        Route::get('/employee/{employee}/earn-point-bookings', 'earnPointBookings')->name('employee.earnPointBookings');
+        Route::post('/employee/{employee}/earn-point', 'earnPoint')->name('employee.earnPoint');
+    });
 
+    Route::controller(AgentAccountController::class)->group(function () {
+        Route::get('/agent-account/slip/{transaction}', 'showSlip')->name('agentAccount.slip');
+        Route::post('/agent-account/{agentAccount}/top-up', 'topUp')->name('agentAccount.topUp');
+    });
 
+    Route::controller(AgentController::class)->group(function () {
+        Route::post('/agent/{agent}/topup/{transaction}/approve', 'approveTopUp')->name('agent.topup.approve');
+    });
 
     Route::resources([
         'booking' => BookingController::class,

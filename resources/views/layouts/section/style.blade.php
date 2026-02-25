@@ -32,5 +32,16 @@
 <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
 
 <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
+<script src="{{ asset('assets/vendor/js/helpers.js') }}"></script>
+<script src="{{ asset('assets/vendor/js/template-customizer.js') }}"></script>
 
+
+@if (Auth::user()->role =='agent')
+<script src="{{ asset('assets/js/config-agent.js') }}"></script>
+@elseif(Auth::user()->role =='employee')
+<script src="{{ asset('assets/js/config-employee.js') }}"></script>
+@elseif(Auth::user()->role =='broker')
+<script src="{{ asset('assets/js/config-broker.js') }}"></script>
+@else
 <script src="{{ asset('assets/js/config.js') }}"></script>
+@endif

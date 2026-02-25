@@ -107,12 +107,12 @@ class SalesPartnerController extends Controller
 
                 return redirect()->route('broker.index');
             } else if ($salesPartner->type == 'agent') {
-                AgentAccount::create([
+                $agent = AgentAccount::create([
                     'sales_partner_id' => $salesPartner->id,
                     'type' => 'PRE',
                 ]);
 
-                return redirect()->route('agent.index');
+                return redirect()->route('agent.show', ['agent' => $agent]);
             }
         } else {
             session()->flash('error', __('messages.error'));

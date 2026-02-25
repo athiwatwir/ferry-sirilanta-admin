@@ -89,7 +89,8 @@ class Booking extends Model
         'payment_method',
         'nettamt',
         'expires_at',
-        'sales_partner_id'
+        'sales_partner_id',
+        'isearned'
     ];
 
     public function agent()

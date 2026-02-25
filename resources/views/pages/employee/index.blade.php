@@ -29,7 +29,7 @@
                 <td>{{ $broker->name }}</td>
                 <td>{{ $broker->code }}</td>
                 <td>{{ $broker->user->email }}</td>
-                <td class="text-center">{{ $broker->brokerPoint->balance }}</td>
+                <td class="text-center">{{ number_format($broker->point ?? 0) }}</td>
                 <td class="text-end">
                     <a href="{{ route('employee.show', ['employee' => $broker]) }}" class="btn btn-outline-secondary ">View</a>
                 </td>

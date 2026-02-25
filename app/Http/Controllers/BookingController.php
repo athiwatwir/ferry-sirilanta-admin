@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\UtilHelper;
 use App\Models\Agent;
 use App\Models\Booking;
+use App\Models\SalesPartner;
 use App\Services\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,7 @@ class BookingController extends Controller
         $tripType = request()->trip_type;
 
         $agent_id = request()->agent_id;
+        $salesPartner = null;
 
         //dd($request->filled('status'));
 
@@ -106,6 +108,8 @@ class BookingController extends Controller
             $salesPartnerId = Auth::user()->sales_partner_id;
 
             $query->where('b.sales_partner_id', $salesPartnerId);
+
+            $salesPartner = SalesPartner::with('agentAccount')->find($salesPartnerId);
         }
 
 
@@ -237,7 +241,8 @@ class BookingController extends Controller
             'searchText' => $searchText,
             'todayDate' => Carbon::now()->format('Y-m-d'),
             'tmrDate' => Carbon::now()->addDay()->format('Y-m-d'),
-            'date_type' => $date_type
+            'date_type' => $date_type,
+            'salesPartner' => $salesPartner
         ]);
     }
 
