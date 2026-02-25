@@ -72,6 +72,10 @@
             <td class="text-center">
 
                 <span class="text-success">+{{ $booking['total_passenger'] }}</span>
+                @if($booking['isearned'] == 'Y')
+                <p class="text-success mb-0">ถอนแล้ว</p>
+
+                @endif
             </td>
 
             <td class="text-center">

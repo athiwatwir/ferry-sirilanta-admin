@@ -98,7 +98,8 @@ class BookingController extends Controller
                 'ag.name as agent_name',
                 'ag.code as agent_code',
                 'b.agent_id',
-                'ag.logo as agent_logo'
+                'ag.logo as agent_logo',
+                'b.isearned'
             );
 
         $query->where('b.agent_id', $agentId);

@@ -51,26 +51,34 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Booking No</th>
-                                <th class="text-center">ผู้ใหญ่</th>
-                                <th class="text-center">เด็ก</th>
-                                <th class="text-center">ทารก</th>
+                                <th>Type</th>
+                                <th>Description</th>
                                 <th class="text-center">Point</th>
+                                <th class="text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($bookings as $booking)
+                            @forelse($transactions as $transaction)
                             <tr>
-                                <td>{{ $booking->departdate?->format('d/m/Y') }}</td>
-                                <td>{{ $booking->bookingno }}</td>
-                                <td class="text-center">{{ $booking->adult_passenger }}</td>
-                                <td class="text-center">{{ $booking->child_passenger }}</td>
-                                <td class="text-center">{{ $booking->infant_passenger }}</td>
-                                <td class="text-center fw-semibold">{{ $booking->point }}</td>
+                                <td>{{ $transaction->created_at?->format('d/m/Y H:i') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $transaction->type == 'withdraw' ? 'success' : 'info' }}">
+                                        {{ $transaction->type == 'withdraw' ? 'ถอน Point' : ucfirst($transaction->type) }}
+                                    </span>
+                                </td>
+                                <td>{{ $transaction->description ?? '-' }}</td>
+                                <td class="text-center fw-semibold">{{ number_format($transaction->amount) }}</td>
+                                <td class="text-center">
+                                    @if($transaction->isapproved == 'Y')
+                                        <span class="badge bg-success">อนุมัติแล้ว</span>
+                                    @else
+                                        <span class="badge bg-warning">รออนุมัติ</span>
+                                    @endif
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-3">ยังไม่มีรายการจอง</td>
+                                <td colspan="5" class="text-center text-muted py-3">ยังไม่มีรายการ Transaction</td>
                             </tr>
                             @endforelse
                         </tbody>
