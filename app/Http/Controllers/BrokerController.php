@@ -124,13 +124,22 @@ class BrokerController extends Controller
             ->groupBy('date')
             ->get()
             ->keyBy('date')
-            ->map(fn ($row) => (float) $row->total);
+            ->map(fn($row) => (float) $row->total);
 
         return view('pages.broker.credit', [
             'title' => 'Credit',
             'salesPartner' => $salesPartner,
             'calendarDate' => $calendarDate,
             'dailyTotals' => $dailyTotals,
+        ]);
+    }
+
+    public function user(string $id)
+    {
+        $broker = SalesPartner::with('user', 'agentAccount')->find($id);
+        return view('pages.broker.user', [
+            'title' => 'Broker > ' . $broker->name . ' > Users',
+            'broker' => $broker,
         ]);
     }
 }

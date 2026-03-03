@@ -28,7 +28,12 @@
                             <p>{{ $broker->user->email }}</p>
                         </div>
                     </div>
-
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <a href="{{ route('broker.user', $broker) }}" class="btn btn-outline-secondary">รายชื่อพนักงาน</a>
+                        </div>
+                    </div>
 
                 </div>
             </div>

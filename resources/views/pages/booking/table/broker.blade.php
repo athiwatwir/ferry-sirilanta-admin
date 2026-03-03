@@ -76,7 +76,7 @@
                     </li>
 
                     <li>
-                        <a class="dropdown-item" href="{{ route('booking.payment',['invoiceno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
+                        <a class="dropdown-item" href="{{ env('PAYMENT_URL') }}/payment/{{ $booking['bookingno'] }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
                     </li>
                 </x-button.dropdown>
             </td>

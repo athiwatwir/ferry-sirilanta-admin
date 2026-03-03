@@ -149,6 +149,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/broker/user/{broker}', 'user')->name('broker.user');
         Route::get('/broker/credit', 'credit')->name('broker.credit');
         Route::patch('/broker/{broker}/credit-limit', 'updateCreditLimit')->name('broker.updateCreditLimit');
+
+        Route::get('/broker/user/{salesPartner}', 'user')->name('broker.user');
     });
 
     Route::controller(EmployeeController::class)->group(function () {
