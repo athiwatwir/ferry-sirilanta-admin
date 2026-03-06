@@ -31,7 +31,7 @@
                     <hr>
                     <div class="row">
                         <div class="col-12">
-                            <a href="{{ route('broker.user', $broker) }}" class="btn btn-outline-secondary">รายชื่อพนักงาน</a>
+                            <a href="{{ route('broker.user', $broker) }}" class="btn btn-outline-secondary">รายชื่อพนักงาน ({{ $broker->users->count() }})</a>
                         </div>
                     </div>
 

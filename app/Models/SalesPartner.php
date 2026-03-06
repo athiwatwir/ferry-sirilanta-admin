@@ -45,7 +45,12 @@ class SalesPartner extends Model
 
     public function user()
     {
-        return $this->hasOne(User::class, 'sales_partner_id', 'id');
+        return $this->hasOne(User::class, 'sales_partner_id', 'id')->where('isdefault', 'Y')->orderBy('created_at', 'ASC');
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'sales_partner_id', 'id');
     }
 
     public function agentAccount()

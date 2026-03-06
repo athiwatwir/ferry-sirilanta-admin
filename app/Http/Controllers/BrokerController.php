@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\SalesPartner;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -136,10 +137,78 @@ class BrokerController extends Controller
 
     public function user(string $id)
     {
-        $broker = SalesPartner::with('user', 'agentAccount')->find($id);
-        return view('pages.broker.user', [
+        $broker = SalesPartner::with('users', 'agentAccount')->find($id);
+        return view('pages.broker.user.user', [
             'title' => 'Broker > ' . $broker->name . ' > Users',
             'broker' => $broker,
+            'breadcrumbs' => [
+                'All Broker' => route('broker.index'),
+                $broker->name => route('broker.show', $broker),
+                'รายชื่อพนักงาน' => ''
+            ],
         ]);
+    }
+
+    public function createUser(string $id)
+    {
+        $broker = SalesPartner::find($id);
+        return view('pages.broker.user.create', [
+            'title' => 'Broker > ' . $broker->name . ' > Create User',
+            'broker' => $broker,
+            'breadcrumbs' => [
+                'All Broker' => route('broker.index'),
+                $broker->name => route('broker.show', $broker),
+                'รายชื่อพนักงาน' => route('broker.user', $broker),
+                'Create' => ''
+            ],
+        ]);
+    }
+
+    public function storeUser(Request $request, string $id)
+    {
+        $broker = SalesPartner::find($id);
+        $data  = $request->all();
+        $data['sales_partner_id'] = $broker->id;
+        $data['isdefault'] = 'N';
+        $data['role'] = 'broker_employee';
+        $data['agent_id'] = env('AGENT_ID');
+        $broker->user()->create($data);
+
+        return redirect()->route('broker.user', $broker);
+    }
+
+    public function editUser(string $id)
+    {
+        $user = User::find($id);
+        return view('pages.broker.user.edit', [
+            'title' => 'Broker > ' . $user->name . ' > Edit User',
+            'user' => $user,
+        ]);
+    }
+
+    public function updateUser(Request $request, string $id)
+    {
+        $user = User::find($id);
+        $data = $request->all();
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+        //dd($data);
+        return redirect()->route('broker.user', $user->sales_partner_id);
+    }
+
+    public function destroyUser(string $id)
+    {
+        $user = User::find($id);
+
+        $broker = SalesPartner::find($user->sales_partner_id);
+        $user->name = $user->name . '_deleted_' . now()->format('YmdHis');
+        $user->email = $user->email . '_deleted_' . now()->format('YmdHis');
+        $user->save();
+        $user->delete();
+        return redirect()->route('broker.user', $broker);
     }
 }

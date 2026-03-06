@@ -151,6 +151,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('/broker/{broker}/credit-limit', 'updateCreditLimit')->name('broker.updateCreditLimit');
 
         Route::get('/broker/user/{salesPartner}', 'user')->name('broker.user');
+        Route::get('/broker/user/create/{broker}', 'createUser')->name('broker.createUser');
+        Route::post('/broker/user/store/{broker}', 'storeUser')->name('broker.storeUser');
+
+        Route::get('/broker/user/edit/{user}', 'editUser')->name('broker.editUser');
+        Route::patch('/broker/user/update/{user}', 'updateUser')->name('broker.updateUser');
+        Route::delete('/broker/user/destroy/{user}', 'destroyUser')->name('broker.destroyUser');
     });
 
     Route::controller(EmployeeController::class)->group(function () {
