@@ -8,7 +8,7 @@
                 <h5 class="mb-0">คะแนนรวมที่ยังไม่ได้ถอน</h5>
                 <span class="badge bg-primary fs-5 px-3 py-2">{{ number_format($totalPoint) }} Point</span>
             </div>
-            <p class="text-muted small mb-0 mt-1">นับจากจำนวนผู้โดยสาร (ผู้ใหญ่ + เด็ก + ทารก) ในแต่ละการจองที่ยังไม่ถอน</p>
+
         </div>
     </div>
     <hr>
@@ -69,9 +69,9 @@
                 <td class="text-center fw-semibold">{{ number_format($transaction->amount) }}</td>
                 <td class="text-center">
                     @if($transaction->isapproved == 'Y')
-                        <span class="badge bg-success">อนุมัติแล้ว</span>
+                    <span class="badge bg-success">อนุมัติแล้ว</span>
                     @else
-                        <span class="badge bg-warning">รออนุมัติ</span>
+                    <span class="badge bg-warning">รออนุมัติ</span>
                     @endif
                 </td>
             </tr>

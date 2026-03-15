@@ -141,11 +141,7 @@ class BrokerController extends Controller
         return view('pages.broker.user.user', [
             'title' => 'Broker > ' . $broker->name . ' > Users',
             'broker' => $broker,
-            'breadcrumbs' => [
-                'All Broker' => route('broker.index'),
-                $broker->name => route('broker.show', $broker),
-                'รายชื่อพนักงาน' => ''
-            ],
+
         ]);
     }
 

@@ -21,7 +21,7 @@
                                     <i class="icon-base ti tabler-users icon-lg"></i>
                                 </div>
                                 <div class="card-info">
-                                    <h5 class="mb-0">{{ number_format($salesPartner->agentAccount?->credit_used ?? 0) }}THB</h5>
+                                    <h5 class="mb-0">{{ number_format($salesPartner->agentAccount?->credit_balance ?? 0) }}THB</h5>
                                     <small>เครดิตที่ใช้</small>
                                 </div>
                             </div>

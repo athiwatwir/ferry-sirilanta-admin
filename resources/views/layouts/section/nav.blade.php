@@ -47,6 +47,14 @@
                     <div data-i18n="Page 1">Your Crdit</div>
                 </a>
             </li>
+
+            <li class="menu-item">
+                <a href="{{ route('broker.user', ['broker' => Auth::user()->sales_partner_id]) }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-user-check"></i>
+                    <div data-i18n="Page 1">พนักงานขาย</div>
+                </a>
+            </li>
+
             @endif
 
             @if (Auth::user()->role =='ADMIN')
