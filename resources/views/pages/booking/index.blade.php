@@ -118,7 +118,7 @@
 
         <div class="col-12">
             @if (Auth::user()->role =='agent')
-            @include('pages.booking.table.default')
+            @include('pages.booking.table.agent')
             @elseif(Auth::user()->role =='employee')
             @include('pages.booking.table.employee')
             @elseif(Auth::user()->role =='broker')

@@ -22,17 +22,35 @@
 
                 </div>
                 <div class="col-12 col-lg-7">
-                    <h4>Agent Information</h4>
+                    <div class="row">
+                        <div class="col-12 col-lg-10">
+                            <h4>Agent Information</h4>
+                        </div>
+                        <div class="col-12 col-lg-2 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modal-edit-agent">แก้ไข</button>
+                        </div>
+                    </div>
+
+
                     <hr>
                     <div class="row">
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-3">
                             <strong>Name</strong>
                             <p>{{ $agent->name }}</p>
                         </div>
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-3">
+                            <strong>Code</strong>
+                            <p>{{ $agent->code }}</p>
+                        </div>
+                        <div class="col-12 col-lg-4">
                             <strong>Email</strong>
                             <p>{{ $agent->user->email }}</p>
                         </div>
+                        <div class="col-12 col-lg-2">
+                            <strong>Discount%</strong>
+                            <p>{{ $agent->discount }}</p>
+                        </div>
+
                     </div>
 
 
@@ -104,5 +122,42 @@
     </div>
 </div>
 
+@endsection
 
+@section('modal')
+<x-modal id="modal-edit-agent" title="แก้ไขข้อมูล Agent">
+    <x-form type="modal" :action="route('agent.update', $agent)" method="POST">
+        @method('PUT')
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="name" label="Name" :value="old('name', $agent->name)" :isrequire="true" />
+            </div>
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="code" label="Code" :value="old('code', $agent->code)" :isrequire="false" />
+            </div>
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="email" label="Email" type="email" :value="old('email', $agent->user?->email)" :isrequire="true" />
+            </div>
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="discount" label="Discount %" type="number" :value="old('discount', $agent->discount)" :isrequire="false" placeholder="0" min="0" max="100" step="0.01" />
+            </div>
+            <div class="col-12">
+                <x-form.float.input name="password" label="Password (เว้นว่างถ้าไม่เปลี่ยน)" type="password" :isrequire="false" value="" />
+            </div>
+        </div>
+    </x-form>
+</x-modal>
+@endsection
+
+@section('script')
+@if ($errors->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('modal-edit-agent');
+        if (el && typeof bootstrap !== 'undefined') {
+            new bootstrap.Modal(el).show();
+        }
+    });
+</script>
+@endif
 @endsection

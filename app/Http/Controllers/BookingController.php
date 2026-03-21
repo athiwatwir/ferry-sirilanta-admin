@@ -90,6 +90,7 @@ class BookingController extends Controller
                 'b.subtotal',
                 'b.nettamt',
                 'p.feeamt',
+                'b.discount',
                 'p.totalamt as payment_totalamt',
                 'b.status',
                 'b.ispremiumflex',

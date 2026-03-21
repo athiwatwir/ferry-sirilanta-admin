@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AgentAccountTransection;
 use App\Models\SalesPartner;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AgentController extends Controller
 {
@@ -18,11 +19,11 @@ class AgentController extends Controller
         $accountIds = $agents->pluck('agentAccount.id')->filter()->values();
         $pendingCounts = $accountIds->isNotEmpty()
             ? AgentAccountTransection::where('type', 'topup')
-                ->where('isapproved', 'N')
-                ->whereIn('agent_account_id', $accountIds)
-                ->selectRaw('agent_account_id, count(*) as cnt')
-                ->groupBy('agent_account_id')
-                ->pluck('cnt', 'agent_account_id')
+            ->where('isapproved', 'N')
+            ->whereIn('agent_account_id', $accountIds)
+            ->selectRaw('agent_account_id, count(*) as cnt')
+            ->groupBy('agent_account_id')
+            ->pluck('cnt', 'agent_account_id')
             : collect();
 
         $pendingTopUpTotal = $pendingCounts->sum();
@@ -62,7 +63,7 @@ class AgentController extends Controller
      */
     public function show(string $id)
     {
-        $agent = SalesPartner::with(['agentAccount.transections' => fn ($q) => $q->orderBy('created_at', 'desc')], 'user')->find($id);
+        $agent = SalesPartner::with(['agentAccount.transections' => fn($q) => $q->orderBy('created_at', 'desc')], 'user')->find($id);
 
         $transactions = $agent->agentAccount
             ? $agent->agentAccount->transections->where('type', 'topup')
@@ -112,7 +113,16 @@ class AgentController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $agent = SalesPartner::with('user')->findOrFail($id);
+
+        return view('pages.agent.edit', [
+            'title' => 'Agent > ' . $agent->name,
+            'breadcrumbs' => [
+                'All Agent' => route('agent.index'),
+                'Edit' => ''
+            ],
+            'agent' => $agent,
+        ]);
     }
 
     /**
@@ -120,7 +130,38 @@ class AgentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $agent = SalesPartner::with('user')->findOrFail($id);
+
+        $userId = $agent->user?->id;
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'discount' => 'nullable|numeric|min:0|max:100',
+            'password' => 'nullable|string|min:8',
+        ]);
+
+        $agent->update([
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
+            'discount' => $validated['discount'] ?? $agent->discount,
+        ]);
+
+        if ($agent->user) {
+            $userData = ['email' => $validated['email']];
+            if (!empty($validated['password'])) {
+                $userData['password'] = $validated['password'];
+            }
+            $agent->user->update($userData);
+        }
+
+        return redirect()->route('agent.show', $agent)->with('success', 'อัปเดตข้อมูล Agent เรียบร้อย');
     }
 
     /**

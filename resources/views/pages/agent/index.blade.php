@@ -28,6 +28,7 @@
                 <th>Name</th>
                 <th>Code</th>
                 <th>Email</th>
+                <th>Discount%</th>
                 <th class="text-end">Wallet Balance</th>
                 <th></th>
             </tr>
@@ -44,6 +45,7 @@
                 </td>
                 <td>{{ $agent->code }}</td>
                 <td>{{ $agent->user?->email ?? '-' }}</td>
+                <td>{{ $agent->discount ?? 0 }}</td>
                 <td class="text-end">
                     <x-label-price :price="$agent->agentAccount?->wallet_balance ?? 0" />
                 </td>
