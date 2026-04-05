@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class BrokerController extends Controller
 {
@@ -93,7 +94,39 @@ class BrokerController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $broker = SalesPartner::with('user')->findOrFail($id);
+
+        $userId = $broker->user?->id;
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'password' => 'nullable|string|min:8',
+        ]);
+
+        $broker->update([
+            'name' => $validated['name'],
+            'code' => $validated['code'] ?? null,
+        ]);
+
+
+        if ($broker->user) {
+            $userData = ['email' => $validated['email']];
+            if (!empty($validated['password'])) {
+                $userData['password'] = $validated['password'];
+            }
+
+            $userData['code'] = $validated['code'];
+            $broker->user->update($userData);
+        }
+
+        return redirect()->route('broker.show', $broker)->with('success', 'อัปเดตข้อมูล Broker เรียบร้อย');
     }
 
     /**
@@ -168,6 +201,8 @@ class BrokerController extends Controller
         $data['isdefault'] = 'N';
         $data['role'] = 'broker_employee';
         $data['agent_id'] = env('AGENT_ID');
+        //$data['code'] = $broker->code . '-' . ($data['code'] ?? str_pad(User::where('sales_partner_id', $broker->id)->count() + 1, 4, '0', STR_PAD_LEFT));
+        $data['code'] = $data['code'] ?? null;
         $broker->user()->create($data);
 
         return redirect()->route('broker.user', $broker);
@@ -206,5 +241,18 @@ class BrokerController extends Controller
         $user->save();
         $user->delete();
         return redirect()->route('broker.user', $broker);
+    }
+
+    public function updateCreditUsed(Request $request, string $id)
+    {
+        $broker = SalesPartner::with('agentAccount')->findOrFail($id);
+
+        $amount = $request->amount;
+        if ($amount > $broker->agentAccount->credit_balance) {
+            return redirect()->route('broker.show', $broker)->with('error', 'จำนวนเงินที่จะชำระไม่สามารถมากกว่าวงเงินเครดิตคงเหลือ');
+        }
+
+        $broker->agentAccount->update(['credit_balance' => $broker->agentAccount->credit_balance - $amount]);
+        return redirect()->route('broker.show', $broker)->with('success', 'อัพเดทวงเงินเครดิตเรียบร้อย');
     }
 }

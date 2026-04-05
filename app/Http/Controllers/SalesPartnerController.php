@@ -90,7 +90,8 @@ class SalesPartnerController extends Controller
                 'password' => $request->user['password'],
                 'sales_partner_id' => $salesPartner->id,
                 'agent_id' => $data['agent_id'],
-                'role' => $salesPartner->type
+                'role' => $salesPartner->type,
+                'code' => $request->code,
             ]);
 
             if ($salesPartner->type == 'employee') {

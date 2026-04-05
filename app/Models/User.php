@@ -28,7 +28,8 @@ class User extends Authenticatable
         'agent_id',
         'sales_partner_id',
         'mobile',
-        'isdefault'
+        'isdefault',
+        'code'
     ];
 
     /**

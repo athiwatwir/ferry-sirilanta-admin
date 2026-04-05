@@ -7,23 +7,44 @@
         <x-card>
             <div class="row">
                 <div class="col-12 col-lg-5 text-center border-end">
-                    <h2 class="text-primary">
-                        Credit Used {{ number_format($broker->agentAccount?->credit_balance ?? 0) }} THB
-                    </h2>
-                    <h4 class="text-danger">
-                        Credit Limit {{ number_format($broker->agentAccount?->credit_limit ?? 0) }} THB <button type="button" class="btn btn-sm btn-outline-secondary mt-1" data-bs-toggle="modal" data-bs-target="#modal-credit-limit">แก้ไข</button>
-                    </h4>
+                    <div class="row">
+                        <div class="col">
+                            <h4 class="mb-0">
+                                Credit Used
+                            </h4>
+                            <h2 class="text-success">{{ number_format($broker->agentAccount?->credit_balance ?? 0) }} THB</h2>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" data-bs-toggle="modal" data-bs-target="#modal-credit-used">Clear Credit</button>
+                        </div>
+                        <div class="col">
+                            <h4 class="mb-0">
+                                Credit Limit
+                            </h4>
+                            <h2 class="text-danger">{{ number_format($broker->agentAccount?->credit_limit ?? 0) }} THB</h2>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" data-bs-toggle="modal" data-bs-target="#modal-credit-limit">Update Credit Limit</button>
+                        </div>
+                    </div>
 
                 </div>
                 <div class="col-12 col-lg-7">
-                    <h4>Broker Information</h4>
+                    <div class="row">
+                        <div class="col-12 col-lg-10">
+                            <h4>Broker Information</h4>
+                        </div>
+                        <div class="col-12 col-lg-2 text-end">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-edit-broker">Edit</button>
+                        </div>
+                    </div>
                     <hr>
                     <div class="row">
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-4">
                             <strong>Name</strong>
                             <p>{{ $broker->name }}</p>
                         </div>
-                        <div class="col-12 col-lg-6">
+                        <div class="col-12 col-lg-4">
+                            <strong>Code</strong>
+                            <p>{{ $broker->code }}</p>
+                        </div>
+                        <div class="col-12 col-lg-4">
                             <strong>Email</strong>
                             <p>{{ $broker->user->email }}</p>
                         </div>
@@ -91,4 +112,46 @@
         </div>
     </x-form>
 </x-modal>
+<x-modal id="modal-credit-used" title="Clear Credit">
+    <x-form type="modal" :action="route('broker.updateCreditUsed', $broker)" method="POST">
+        @method('PATCH')
+        <div class="row">
+            <div class="col-12">
+                <x-form.float.input name="amount" label="จำนวนเงินที่จะชำระ (THB)" type="number" :value="old('credit_used', $broker->agentAccount->credit_balance ?? 0)" :isrequire="true" placeholder="0" min="0" step="0.01" />
+            </div>
+        </div>
+    </x-form>
+</x-modal>
+<x-modal id="modal-edit-broker" title="แก้ไขข้อมูล Broker">
+    <x-form type="modal" :action="route('broker.update', $broker)" method="POST">
+        @method('PUT')
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="name" label="Name" :value="old('name', $broker->name)" :isrequire="true" />
+            </div>
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="code" label="Code" :value="old('code', $broker->code)" :isrequire="false" />
+            </div>
+            <div class="col-12">
+                <x-form.float.input name="email" label="Email" type="email" :value="old('email', $broker->user?->email)" :isrequire="true" />
+            </div>
+            <div class="col-12">
+                <x-form.float.input name="password" label="Password (เว้นว่างถ้าไม่เปลี่ยน)" type="password" :isrequire="false" value="" />
+            </div>
+        </div>
+    </x-form>
+</x-modal>
+@stop
+
+@section('script')
+@if ($errors->hasAny(['name', 'code', 'email', 'password']))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var el = document.getElementById('modal-edit-broker');
+        if (el && typeof bootstrap !== 'undefined') {
+            new bootstrap.Modal(el).show();
+        }
+    });
+</script>
+@endif
 @stop

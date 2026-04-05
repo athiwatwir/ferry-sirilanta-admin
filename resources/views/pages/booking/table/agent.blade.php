@@ -41,9 +41,7 @@
             </td>
             <td>
                 {{ Str::limit($booking['customer_name'], 13, '...')  }}
-                <div class="d-flex">
-                    <a href=""><i class="icon-base ti tabler-mail"></i></a>
-                </div>
+
             </td>
             <td class="text-center">
                 {{ $booking['total_passenger'] }}
@@ -52,7 +50,7 @@
                 <x-label-price :price="$booking['totalamt']" />
             </td>
             <td class="text-end">
-                <x-label-price :price="$booking['discount']" />
+                <x-label-price :price="$booking['payment_discount']" />
             </td>
             <td class="text-end">
                 <x-label-price :price="$booking['payment_totalamt']" />
@@ -76,7 +74,7 @@
                 <small>{{ $booking['referenceno'] }}</small>
             </td>
             <td class="text-center">
-                <x-button.dropdown editUrl="" :deleteUrl="route('booking.destroy',['booking'=>$booking['id']])">
+                <x-button.dropdown editUrl="" deleteUrl="">
 
                     <li>
                         <a class="dropdown-item" href="{{ route('booking.show',['booking'=>$booking['id']]) }}"><i class="icon-base ti tabler-device-projector icon-22px"></i> View</a>
@@ -88,9 +86,11 @@
                         <a class="dropdown-item" href="{{ route('print.detail',['bookingno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-file-type-pdf icon-22px"></i> Print Detail</a>
                     </li>
 
+                    @if($booking['ispaid'] == 'N')
                     <li>
-                        <a class="dropdown-item" href="{{ route('booking.payment',['invoiceno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
+                        <a class="dropdown-item" href="{{ env('PAYMENT_URL') }}/payment/{{ $booking['bookingno'] }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
                     </li>
+                    @endif
                 </x-button.dropdown>
             </td>
         </tr>

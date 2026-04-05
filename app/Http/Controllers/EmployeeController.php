@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\SalesPartner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
@@ -111,7 +112,54 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $employee = SalesPartner::with('user')->findOrFail($id);
+
+        if ($employee->type !== 'employee') {
+            abort(404);
+        }
+
+        $userId = $employee->user?->id;
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'password' => 'nullable|string|min:8',
+        ]);
+
+        $brokerData = [
+            'name' => $validated['name'],
+        ];
+        if (array_key_exists('code', $validated)) {
+            $brokerData['code'] = $validated['code'] === '' || $validated['code'] === null
+                ? null
+                : $validated['code'];
+        }
+        $employee->update($brokerData);
+
+        if ($employee->user) {
+            $userData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+            ];
+            if (array_key_exists('code', $validated)) {
+                $userData['code'] = $validated['code'] === '' || $validated['code'] === null
+                    ? null
+                    : $validated['code'];
+            }
+            if (!empty($validated['password'])) {
+                $userData['password'] = $validated['password'];
+            }
+            $userData['code'] = $validated['code'];
+            $employee->user->update($userData);
+        }
+
+        return redirect()->route('employee.show', $employee)->with('success', 'อัปเดตข้อมูล Employee เรียบร้อย');
     }
 
     /**

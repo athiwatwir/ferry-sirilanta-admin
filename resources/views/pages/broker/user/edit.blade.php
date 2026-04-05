@@ -9,6 +9,9 @@
                 <x-form.float.input name="name" label="Full Name" :value="$user->name" />
             </div>
             <div class="col-12 col-lg-3">
+                <x-form.float.input name="code" label="Code {{ $user->salesPartner->code }}-XXXX" :value="$user->code" />
+            </div>
+            <div class="col-12 col-lg-3">
                 <x-form.float.input name="mobile" label="Mobile" :isrequire="false" :value="$user->mobile" />
             </div>
             <div class="col-12 col-lg-3">

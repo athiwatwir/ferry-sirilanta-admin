@@ -157,6 +157,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/broker/user/edit/{user}', 'editUser')->name('broker.editUser');
         Route::patch('/broker/user/update/{user}', 'updateUser')->name('broker.updateUser');
         Route::delete('/broker/user/destroy/{user}', 'destroyUser')->name('broker.destroyUser');
+
+        Route::patch('/broker/{broker}/credit-used', 'updateCreditUsed')->name('broker.updateCreditUsed');
     });
 
     Route::controller(EmployeeController::class)->group(function () {

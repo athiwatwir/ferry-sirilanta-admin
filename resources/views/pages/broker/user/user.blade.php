@@ -14,6 +14,7 @@
                     <tr>
                         <th>#</th>
                         <th>Name</th>
+                        <th>Code</th>
                         <th>Email</th>
                         <th>Phone</th>
                         <th class="text-end">Action</th>
@@ -24,6 +25,7 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $user->name }} @if ($user->isdefault == 'Y') <span class="badge bg-primary">Default</span> @endif</td>
+                        <td>{{ $user->code }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->mobile }}</td>
                         <td class="text-end">

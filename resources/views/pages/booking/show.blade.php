@@ -11,11 +11,6 @@
             <div class="col-lg-8 order-2 order-md-1 d-none d-none d-lg-block">
                 {{-- Journey Information --}}
                 <div class="card shadow-sm mb-4 order-2 order-md-1">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-route me-2"></i>Journey Information
-                        </h5>
-                    </div>
                     <div class="card-body">
                         @foreach ($booking->bookingSubRoutes as $route)
                         <div class="row align-items-center">
@@ -332,14 +327,6 @@
                         <a href="{{ route('print.detail', ['bookingno' => $booking['bookingno']]) }}" class="btn btn-primary btn-lg w-100 mb-2" target="_blank">
                             <i class="fas fa-print me-2"></i>Print Detail
                         </a>
-                        <button class="btn btn-outline-secondary w-100 mb-2">
-                            <i class="fas fa-envelope me-2"></i>Send Email
-                        </button>
-                        @if ($booking['status'] == 'CO' && $booking['amend'] == 0)
-                        <button class="btn btn-outline-warning w-100">
-                            <i class="fas fa-edit me-2"></i>Edit Booking
-                        </button>
-                        @endif
                     </div>
                 </div>
             </div>
