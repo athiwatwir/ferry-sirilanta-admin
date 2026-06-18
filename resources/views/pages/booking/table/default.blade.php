@@ -16,7 +16,7 @@
             <th>Status</th>
 
             <th>Agent Ref.</th>
-            <th>Amend</th>
+
             <th class="text-center">Action</th>
         </tr>
     </thead>
@@ -77,7 +77,7 @@
 
                 <small>{{ $booking['referenceno'] }}</small>
             </td>
-            <td class="text-center">{{ $booking['amend'] }}</td>
+
             <td class="text-center">
                 <x-button.dropdown editUrl="" :deleteUrl="route('booking.destroy',['booking'=>$booking['id']])">
 
@@ -91,9 +91,7 @@
                         <a class="dropdown-item" href="{{ route('print.detail',['bookingno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-file-type-pdf icon-22px"></i> Print Detail</a>
                     </li>
 
-                    <li>
-                        <a class="dropdown-item" href="{{ route('booking.payment',['invoiceno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
-                    </li>
+                    <x-booking.dropdown-payment :booking="$booking" />
                 </x-button.dropdown>
             </td>
         </tr>

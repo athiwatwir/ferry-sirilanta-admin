@@ -10,7 +10,8 @@
 
 @if ($salesPartner && Auth::user()->role =='broker')
 @include('pages.booking.dashboard.broker')
-@else
+@elseif (Auth::user()->role == 'employee' && $employeeDashboard)
+@include('pages.booking.dashboard.employee')
 @endif
 <x-card>
     <div class="row">

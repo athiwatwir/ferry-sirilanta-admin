@@ -2,11 +2,38 @@
 
 @section('content')
 <x-card>
-    <div class="row">
-        <div class="col-9 col-lg-6">
-
+    <div class="row align-items-center mb-3">
+        <div class="col-12 col-lg-8">
+            <div class="d-flex align-items-start p-3 rounded bg-label-warning">
+                <div class="avatar avatar-sm me-3 flex-shrink-0 mt-1">
+                    <span class="avatar-initial rounded bg-warning">
+                        <i class="icon-base ti tabler-user-star icon-sm"></i>
+                    </span>
+                </div>
+                <div>
+                    <h6 class="mb-1 fw-semibold text-warning">ระบบ Employee (Point)</h6>
+                    <p class="mb-2 mb-md-3 text-body small">
+                        Employee คือบัญชีพนักงานขายตั๋วที่สามารถรับชำระเงินสดหรือบัตรเครดิตผ่านระบบได้
+                        โดยมีการบันทึกยอดขายและสะสมคะแนนตามจำนวนผู้โดยสารที่ขายได้
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-label-warning">
+                            <i class="icon-base ti tabler-cash icon-xs me-1"></i>รับชำระเงินสด/บัตร
+                        </span>
+                        <span class="badge bg-label-primary">
+                            <i class="icon-base ti tabler-receipt icon-xs me-1"></i>บันทึกยอดขาย
+                        </span>
+                        <span class="badge bg-label-success">
+                            <i class="icon-base ti tabler-coins icon-xs me-1"></i>สะสม Point
+                        </span>
+                        <span class="badge bg-label-info">
+                            <i class="icon-base ti tabler-users icon-xs me-1"></i>ตามจำนวนผู้โดยสาร
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-3 col-lg-6 text-end">
+        <div class="col-12 col-lg-4 text-lg-end mt-3 mt-lg-0">
             <x-button.new :href="route('employee.create', ['type' => 'employee'])" />
         </div>
     </div>

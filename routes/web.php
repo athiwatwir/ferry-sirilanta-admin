@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
     Route::controller(BrokerController::class)->group(function () {
         Route::get('/broker/user/{broker}', 'user')->name('broker.user');
         Route::get('/broker/credit', 'credit')->name('broker.credit');
+        Route::get('/broker/transactions', 'transactions')->name('broker.transactions');
         Route::patch('/broker/{broker}/credit-limit', 'updateCreditLimit')->name('broker.updateCreditLimit');
 
         Route::get('/broker/user/{salesPartner}', 'user')->name('broker.user');

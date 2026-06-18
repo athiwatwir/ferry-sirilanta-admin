@@ -70,11 +70,16 @@
             </td>
 
             <td class="text-center">
-
-                <span class="text-success">+{{ $booking['total_passenger'] }}</span>
-                @if($booking['isearned'] == 'Y')
-                <p class="text-success mb-0">ถอนแล้ว</p>
-
+                @if(($booking['ispayment'] ?? 'N') === 'Y')
+                    <span class="text-success">+{{ $booking['total_passenger'] }}</span>
+                    @if($booking['isearned'] == 'Y')
+                        <p class="text-success mb-0">ถอนแล้ว</p>
+                    @else
+                        <p class="text-muted small mb-0">ยังไม่ถอน</p>
+                    @endif
+                @else
+                    <span class="text-muted">+0</span>
+                    <p class="text-muted small mb-0">รอชำระเงิน</p>
                 @endif
             </td>
 
@@ -91,9 +96,7 @@
                         <a class="dropdown-item" href="{{ route('print.detail',['bookingno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-file-type-pdf icon-22px"></i> Print Detail</a>
                     </li>
 
-                    <li>
-                        <a class="dropdown-item" href="{{ route('booking.payment',['invoiceno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
-                    </li>
+                    <x-booking.dropdown-payment :booking="$booking" />
                 </x-button.dropdown>
             </td>
         </tr>

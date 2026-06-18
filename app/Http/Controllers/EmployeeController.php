@@ -20,6 +20,7 @@ class EmployeeController extends Controller
         $brokers = SalesPartner::with('brokerPoint', 'user')->where('type', 'employee')->where('agent_id', env('AGENT_ID'))->get();
 
         $points = Booking::whereIn('sales_partner_id', $brokers->pluck('id'))
+            ->where('ispayment', 'Y')
             ->where('isearned', 'N')
             ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
             ->selectRaw('sales_partner_id, sum(adult_passenger + child_passenger + infant_passenger) as point')
@@ -77,8 +78,9 @@ class EmployeeController extends Controller
                 ->get();
         }
 
-        // คำนวณ point รวมจากจำนวนผู้โดยสารใน booking ที่ยังไม่ถอน (isearned = 'N')
+        // คำนวณ point รวมจากจำนวนผู้โดยสารใน booking ที่ยังไม่ถอน (isearned = 'N') และชำระเงินแล้วเท่านั้น (ispayment = 'Y')
         $bookings = Booking::where('sales_partner_id', $id)
+            ->where('ispayment', 'Y')
             ->where('isearned', 'N')
             ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
             ->get();
@@ -185,9 +187,10 @@ class EmployeeController extends Controller
             ]);
         }
 
-        // ดึง bookings ที่ยังไม่ถอน point
+        // ดึง bookings ที่ยังไม่ถอน point และต้องชำระเงินแล้วเท่านั้น (ispayment = 'Y')
         $bookings = Booking::where('user_id', $userId)
             ->where('sales_partner_id', $salesPartnerId)
+            ->where('ispayment', 'Y')
             ->where('isearned', 'N')
             ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
             ->orderBy('departdate', 'desc')
@@ -223,6 +226,7 @@ class EmployeeController extends Controller
     public function earnPointBookings(string $id)
     {
         $bookings = Booking::where('sales_partner_id', $id)
+            ->where('ispayment', 'Y')
             ->where('isearned', 'N')
             ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
             ->orderBy('departdate', 'desc')

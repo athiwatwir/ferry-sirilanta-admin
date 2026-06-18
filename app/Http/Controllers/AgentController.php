@@ -34,7 +34,7 @@ class AgentController extends Controller
         }
 
         return view('pages.agent.index', [
-            'title' => 'Agent',
+            'title' => 'Agent/ระบบ Wallet',
             'agents' => $agents,
             'pendingTopUpTotal' => $pendingTopUpTotal,
         ]);
@@ -63,7 +63,13 @@ class AgentController extends Controller
      */
     public function show(string $id)
     {
-        $agent = SalesPartner::with(['agentAccount.transections' => fn($q) => $q->orderBy('created_at', 'desc')], 'user')->find($id);
+        $agent = SalesPartner::with([
+            'agentAccount.transections' => fn($q) => $q->orderBy('created_at', 'desc'),
+            'user',
+        ])
+            ->where('type', 'agent')
+            ->where('agent_id', env('AGENT_ID'))
+            ->findOrFail($id);
 
         $transactions = $agent->agentAccount
             ? $agent->agentAccount->transections->where('type', 'topup')

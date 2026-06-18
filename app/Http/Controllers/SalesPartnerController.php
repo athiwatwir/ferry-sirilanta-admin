@@ -71,12 +71,18 @@ class SalesPartnerController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $request->validate([
             'name' => 'required|string',
             'user.name' => 'required|string',
-            'user.email' => 'required|email',
+            'user.email' => 'required|email|unique:users,email',
             'user.password' => 'required|string',
+        ], [
+            'name.required' => 'กรุณาระบุชื่อ',
+            'user.name.required' => 'กรุณาระบุชื่อผู้ใช้งาน',
+            'user.email.required' => 'กรุณาระบุอีเมล',
+            'user.email.email' => 'รูปแบบอีเมลไม่ถูกต้อง',
+            'user.email.unique' => 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+            'user.password.required' => 'กรุณาระบุรหัสผ่าน',
         ]);
 
         $data = $request->all();
@@ -113,7 +119,7 @@ class SalesPartnerController extends Controller
                     'type' => 'PRE',
                 ]);
 
-                return redirect()->route('agent.show', ['agent' => $agent]);
+                return redirect()->route('agent.show', ['agent' => $salesPartner]);
             }
         } else {
             session()->flash('error', __('messages.error'));

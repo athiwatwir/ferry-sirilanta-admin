@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgentAccountTransection;
 use App\Models\Booking;
 use App\Models\SalesPartner;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class BrokerController extends Controller
@@ -48,11 +50,20 @@ class BrokerController extends Controller
      */
     public function show(string $id)
     {
-        //
-        $broker = SalesPartner::with('user', 'agentAccount')->find($id);
+        $broker = SalesPartner::with([
+            'user',
+            'users',
+            'agentAccount.transections' => fn($q) => $q->orderBy('created_at', 'desc'),
+        ])->findOrFail($id);
+
+        $transactions = $broker->agentAccount
+            ? $broker->agentAccount->transections
+            : collect();
+
         return view('pages.broker.show', [
             'title' => 'Broker > ' . $broker->name,
             'broker' => $broker,
+            'transactions' => $transactions,
             'breadcrumbs' => [
                 'All Broker' => route('broker.index'),
                 'View' => ''
@@ -168,6 +179,23 @@ class BrokerController extends Controller
         ]);
     }
 
+    public function transactions()
+    {
+        $salesPartner = SalesPartner::with('user', 'agentAccount')->find(Auth::user()->sales_partner_id);
+
+        $transactions = $salesPartner?->agentAccount
+            ? AgentAccountTransection::where('agent_account_id', $salesPartner->agentAccount->id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+            : collect();
+
+        return view('pages.broker.transactions', [
+            'title' => 'ประวัติการทำรายการ',
+            'salesPartner' => $salesPartner,
+            'transactions' => $transactions,
+        ]);
+    }
+
     public function user(string $id)
     {
         $broker = SalesPartner::with('users', 'agentAccount')->find($id);
@@ -247,12 +275,34 @@ class BrokerController extends Controller
     {
         $broker = SalesPartner::with('agentAccount')->findOrFail($id);
 
-        $amount = $request->amount;
+        if (!$broker->agentAccount) {
+            return redirect()->route('broker.show', $broker)->with('error', 'ไม่พบบัญชี Agent ของ Broker นี้');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ], [
+            'amount.required' => 'กรุณาระบุจำนวนเงิน',
+        ]);
+
+        $amount = (float) $request->amount;
         if ($amount > $broker->agentAccount->credit_balance) {
             return redirect()->route('broker.show', $broker)->with('error', 'จำนวนเงินที่จะชำระไม่สามารถมากกว่าวงเงินเครดิตคงเหลือ');
         }
 
-        $broker->agentAccount->update(['credit_balance' => $broker->agentAccount->credit_balance - $amount]);
+        DB::transaction(function () use ($broker, $amount) {
+            $account = $broker->agentAccount;
+            $account->update(['credit_balance' => $account->credit_balance - $amount]);
+
+            AgentAccountTransection::create([
+                'agent_account_id' => $account->id,
+                'type' => 'payment',
+                'amount' => $amount,
+                'description' => 'Clear Credit ชำระเครดิตคงเหลือ',
+                'isapproved' => 'Y',
+            ]);
+        });
+
         return redirect()->route('broker.show', $broker)->with('success', 'อัพเดทวงเงินเครดิตเรียบร้อย');
     }
 }

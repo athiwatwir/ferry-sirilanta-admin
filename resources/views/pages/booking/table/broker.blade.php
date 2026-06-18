@@ -75,9 +75,7 @@
                         <a class="dropdown-item" href="{{ route('print.detail',['bookingno'=>$booking['bookingno']]) }}" target="_blank"><i class="icon-base ti tabler-file-type-pdf icon-22px"></i> Print Detail</a>
                     </li>
 
-                    <li>
-                        <a class="dropdown-item" href="{{ env('PAYMENT_URL') }}/payment/{{ $booking['bookingno'] }}" target="_blank"><i class="icon-base ti tabler-credit-card-pay icon-22px"></i> Payment</a>
-                    </li>
+                    <x-booking.dropdown-payment :booking="$booking" />
                 </x-button.dropdown>
             </td>
         </tr>

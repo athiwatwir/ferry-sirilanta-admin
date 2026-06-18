@@ -27,6 +27,9 @@ class BookingController extends Controller
         $agentId = env('AGENT_ID');
         //$conditionStr = 'b.agent_id = "' . $agentId . '"';
 
+        //Default with last 7 days
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
 
 
         $station_from = request()->station_from;
@@ -163,9 +166,7 @@ class BookingController extends Controller
                 $query->whereNotIn('b.status', ['delete', 'void', 'VO', 'EXPIRED']);
             }
 
-            //Default with last 7 days
-            $startDate = Carbon::now()->subDays(6)->startOfDay();
-            $endDate = Carbon::now()->endOfDay();
+
 
             if (!empty($daterange)) {
                 $daterangeConvert = UtilHelper::parseDateRange($daterange);
@@ -220,6 +221,28 @@ class BookingController extends Controller
             return $pdf->stream('booking_list.pdf');
         }
 
+        $employeeDashboard = null;
+        if (Auth::user()->role === 'employee') {
+            $userId = Auth::id();
+            $salesPartnerId = Auth::user()->sales_partner_id;
+
+            $salesBase = Booking::where('user_id', $userId)
+                ->where('sales_partner_id', $salesPartnerId)
+                ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
+                ->whereBetween('created_at', [$startDate, $endDate]);
+
+            $employeeDashboard = [
+                'ticket_sales_count' => (clone $salesBase)->count(),
+                'ticket_sales_amount' => (float) (clone $salesBase)->sum('totalamt'),
+                'pending_point' => (int) Booking::where('user_id', $userId)
+                    ->where('sales_partner_id', $salesPartnerId)
+                    ->where('isearned', 'N')
+                    ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
+                    ->selectRaw('COALESCE(SUM(adult_passenger + child_passenger + infant_passenger), 0) as total')
+                    ->value('total'),
+            ];
+        }
+
         //dd($bookings);
         return view('pages.booking.index', [
             'title' => 'Booking Management',
@@ -245,7 +268,8 @@ class BookingController extends Controller
             'todayDate' => Carbon::now()->format('Y-m-d'),
             'tmrDate' => Carbon::now()->addDay()->format('Y-m-d'),
             'date_type' => $date_type,
-            'salesPartner' => $salesPartner
+            'salesPartner' => $salesPartner,
+            'employeeDashboard' => $employeeDashboard,
         ]);
     }
 

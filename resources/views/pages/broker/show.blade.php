@@ -46,13 +46,7 @@
                         </div>
                         <div class="col-12 col-lg-4">
                             <strong>Email</strong>
-                            <p>{{ $broker->user->email }}</p>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-12">
-                            <a href="{{ route('broker.user', $broker) }}" class="btn btn-outline-secondary">รายชื่อพนักงาน ({{ $broker->users->count() }})</a>
+                            <p>{{ $broker->user?->email ?? '-' }}</p>
                         </div>
                     </div>
 
@@ -63,35 +57,105 @@
 
     <div class="col-12 ">
         <x-card>
-            <div class="row">
-                <div class="col-12">
-                    <h4>Booking</h4>
-                    <x-table.datatabble class="booking-table">
-                        <thead>
-                            <tr>
-                                <th class="">Booking Date</th>
-                                <th>Travel Date</th>
-                                <th>Invoice No</th>
+            <div class="nav-align-top">
+                <ul class="nav nav-pills mb-4" role="tablist">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-transactions" aria-selected="true">
+                            <i class="icon-base ti tabler-receipt me-1"></i>Transaction
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-users" aria-selected="false">
+                            <i class="icon-base ti tabler-users-group me-1"></i>รายชื่อพนักงาน Staff ({{ $broker->users->count() }})
+                        </button>
+                    </li>
+                </ul>
 
-                                <th>Ticket No</th>
-                                <th>Type</th>
-                                <th>Customer</th>
-                                <th><i class="icon-base ti tabler-friends"></i></th>
-                                <th class="text-end">Price</th>
-                                <th>Processing Fee</th>
-                                <th class="text-end">Total Price</th>
-                                <th>Route</th>
-                                <th>Status</th>
+                <div class="tab-content p-0">
+                    <div class="tab-pane fade show active" id="broker-tab-transactions" role="tabpanel">
+                        <p class="text-muted small mb-3">รายการ Transaction จาก Agent Account</p>
+                        <table class="table table-hover table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>วันที่</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th class="text-center">จำนวนเงิน</th>
+                                    <th class="text-center">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($transactions as $tx)
+                                <tr>
+                                    <td>{{ $tx->created_at?->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <span class="badge bg-label-primary">{{ ucfirst($tx->type ?? '-') }}</span>
+                                    </td>
+                                    <td>{{ $tx->description ?? '-' }}</td>
+                                    <td class="text-center">
+                                        <x-label-price :price="$tx->amount" />
+                                    </td>
+                                    <td class="text-center">
+                                        @if(($tx->isapproved ?? '') === 'Y')
+                                        <span class="badge bg-success">อนุมัติแล้ว</span>
+                                        @elseif(($tx->isapproved ?? '') === 'N')
+                                        <span class="badge bg-warning text-dark">รออนุมัติ</span>
+                                        @else
+                                        -
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">ยังไม่มีรายการ Transaction</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-                                <th>User</th>
-
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                        </tbody>
-                    </x-table.datatabble>
+                    <div class="tab-pane fade" id="broker-tab-users" role="tabpanel">
+                        <div class="d-flex justify-content-end mb-3">
+                            <x-button.new :href="route('broker.createUser', ['broker' => $broker])" />
+                        </div>
+                        <table class="table table-hover table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($broker->users as $user)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>
+                                        {{ $user->name }}
+                                        @if ($user->isdefault == 'Y')
+                                        <span class="badge bg-primary">Default</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $user->code ?? '-' }}</td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>{{ $user->mobile ?? '-' }}</td>
+                                    <td class="text-end">
+                                        @if ($user->isdefault == 'N')
+                                        <x-button.dropdown :editUrl="route('broker.editUser', ['user' => $user])" :deleteUrl="route('broker.destroyUser', ['user' => $user])" />
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-3">ยังไม่มีพนักงาน (Staff)</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </x-card>
@@ -152,6 +216,7 @@
             new bootstrap.Modal(el).show();
         }
     });
+
 </script>
 @endif
 @stop

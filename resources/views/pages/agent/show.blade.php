@@ -6,20 +6,20 @@
     <div class="col-12">
         <x-card>
             <div class="row">
-                <div class="col-12 col-lg-5 text-center border-end">
-                    <h2 class="text-primary">
-                        Wallet Balance {{ number_format($agent->agentAccount?->wallet_balance ?? 0) }} THB
-                    </h2>
-                    <hr>
-                    <div class="row">
-
-                        <div class="col-12">
-                            <button class="btn btn-success">
-                                <i class="fas fa-minus"></i> Deposit
-                            </button>
+                <div class="col-12 col-lg-5 d-flex align-items-center justify-content-center border-end border-lg-bottom-0 pb-4 pb-lg-0 mb-4 mb-lg-0">
+                    <div class="text-center py-2 px-3 w-100">
+                        <div class="avatar avatar-lg mx-auto mb-3">
+                            <span class="avatar-initial rounded-circle bg-label-primary">
+                                <i class="icon-base ti tabler-wallet icon-lg text-primary"></i>
+                            </span>
                         </div>
+                        <p class="text-muted small text-uppercase fw-medium mb-2">Wallet Balance</p>
+                        <h2 class="display-5 fw-bold text-primary mb-2 lh-1">
+                            {{ number_format($agent->agentAccount?->wallet_balance ?? 0) }}
+                        </h2>
+                        <span class="badge bg-label-primary px-3 py-2 fs-6">THB</span>
+                        <p class="text-muted small mt-3 mb-0">ยอดคงเหลือในระบบ Wallet สำหรับออกตั๋ว</p>
                     </div>
-
                 </div>
                 <div class="col-12 col-lg-7">
                     <div class="row">
@@ -44,7 +44,7 @@
                         </div>
                         <div class="col-12 col-lg-4">
                             <strong>Email</strong>
-                            <p>{{ $agent->user->email }}</p>
+                            <p>{{ $agent->user?->email ?? '-' }}</p>
                         </div>
                         <div class="col-12 col-lg-2">
                             <strong>Discount%</strong>
@@ -158,6 +158,7 @@
             new bootstrap.Modal(el).show();
         }
     });
+
 </script>
 @endif
 @endsection
