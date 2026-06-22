@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Services\RouteService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BookingController extends Controller
 {
@@ -205,20 +207,14 @@ class BookingController extends Controller
 
         $agents = Agent::where('type', 'API')->get();
 
-        if (request()->ispdf == 'Y') {
-            $pdf = Pdf::loadView('pages.booking.pdf.booking', [
-                'bookings' => $bookings,
-                'daterange' => $daterange,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'date_type' => $date_type == 'booking_date' ? 'Booking Date' : 'Travel Date'
-            ])
-                ->setOption([
-                    'dpi' => 150,
-                ])
-                ->setPaper('A4', 'landscape'); // ✅ ใช้ A4 แนวนอน
+        $role = strtolower(Auth::user()->role ?? 'admin');
 
-            return $pdf->stream('booking_list.pdf');
+        if ($request->input('export') === 'excel') {
+            return $this->exportBookingsExcel($bookings, $role);
+        }
+
+        if ($request->input('ispdf') === 'Y') {
+            return $this->exportBookingsPdf($bookings, $role, $daterange, $startDate, $endDate, $date_type);
         }
 
         $employeeDashboard = null;
@@ -402,5 +398,171 @@ class BookingController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    private function exportBookingsExcel(array $bookings, string $role): StreamedResponse
+    {
+        $export = $this->prepareBookingExport($bookings, $role);
+        $filename = 'booking-report-' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($export) {
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($handle, $export['headers']);
+            foreach ($export['rows'] as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    private function exportBookingsPdf(
+        array $bookings,
+        string $role,
+        ?string $daterange,
+        Carbon $startDate,
+        Carbon $endDate,
+        ?string $dateType
+    ) {
+        $export = $this->prepareBookingExport($bookings, $role);
+
+        $pdf = Pdf::loadView('pages.booking.pdf.booking', [
+            'headers' => $export['headers'],
+            'rows' => $export['rows'],
+            'daterange' => $daterange,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'date_type' => $dateType === 'booking_date' ? 'Booking Date' : 'Travel Date',
+        ])
+            ->setOption(['dpi' => 150])
+            ->setPaper('A4', 'landscape');
+
+        return $pdf->stream('booking-report-' . now()->format('Ymd_His') . '.pdf');
+    }
+
+    private function prepareBookingExport(array $bookings, string $role): array
+    {
+        $statusMap = $this->bookingService->status();
+        $tripTypes = $this->bookingService->getTripType();
+
+        $headers = match ($role) {
+            'agent' => [
+                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
+                'Price', 'Discount', 'Nett Price', 'Route', 'Departure', 'Arrival', 'Status', 'Agent Ref.',
+            ],
+            'broker' => [
+                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
+                'Use Credit', 'Route', 'Departure', 'Arrival', 'Status',
+            ],
+            'employee' => [
+                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
+                'Price', 'Processing Fee', 'Total Price', 'Route', 'Departure', 'Arrival', 'Status',
+                'Point', 'Point Status',
+            ],
+            default => [
+                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
+                'Price', 'Processing Fee', 'Total Price', 'Route', 'Departure', 'Arrival', 'Status', 'Agent Ref.',
+            ],
+        };
+
+        $rows = [];
+        foreach ($bookings as $booking) {
+            $base = [
+                $this->formatExportDateTime($booking['created_at'] ?? null),
+                $this->formatExportDate($booking['traveldate'] ?? null),
+                $booking['bookingno'] ?? '',
+                $booking['ticketno'] ?? '',
+                $tripTypes[$booking['trip_type'] ?? ''] ?? ($booking['trip_type'] ?? ''),
+                $booking['customer_name'] ?? '',
+                $booking['total_passenger'] ?? 0,
+            ];
+
+            [$departTime, $arrivalTime] = $this->formatExportTimes($booking);
+            $status = $statusMap[$booking['status'] ?? '']['title'] ?? ($booking['status'] ?? '');
+            $route = $booking['route'] ?? '';
+
+            $rows[] = match ($role) {
+                'agent' => array_merge($base, [
+                    $this->formatExportPrice($booking['totalamt'] ?? 0),
+                    $this->formatExportPrice($booking['payment_discount'] ?? 0),
+                    $this->formatExportPrice($booking['payment_totalamt'] ?? 0),
+                    $route,
+                    $departTime,
+                    $arrivalTime,
+                    $status,
+                    $booking['referenceno'] ?? '',
+                ]),
+                'broker' => array_merge($base, [
+                    $this->formatExportPrice($booking['payment_totalamt'] ?? 0),
+                    $route,
+                    $departTime,
+                    $arrivalTime,
+                    $status,
+                ]),
+                'employee' => array_merge($base, [
+                    $this->formatExportPrice($booking['totalamt'] ?? 0),
+                    $this->formatExportPrice($booking['feeamt'] ?? 0),
+                    $this->formatExportPrice($booking['payment_totalamt'] ?? 0),
+                    $route,
+                    $departTime,
+                    $arrivalTime,
+                    $status,
+                    ...$this->formatEmployeePoint($booking),
+                ]),
+                default => array_merge($base, [
+                    $this->formatExportPrice($booking['totalamt'] ?? 0),
+                    $this->formatExportPrice($booking['feeamt'] ?? 0),
+                    $this->formatExportPrice($booking['payment_totalamt'] ?? 0),
+                    $route,
+                    $departTime,
+                    $arrivalTime,
+                    $status,
+                    $booking['referenceno'] ?? '',
+                ]),
+            };
+        }
+
+        return compact('headers', 'rows');
+    }
+
+    private function formatExportDateTime(?string $value): string
+    {
+        return $value ? Carbon::parse($value)->format('d/m/Y H:i') : '';
+    }
+
+    private function formatExportDate(?string $value): string
+    {
+        return $value ? Carbon::parse($value)->format('d/m/Y') : '';
+    }
+
+    private function formatExportPrice($value): string
+    {
+        return number_format((float) ($value ?? 0), 2, '.', '');
+    }
+
+    private function formatExportTimes(array $booking): array
+    {
+        $depart = !empty($booking['depart_time'])
+            ? Carbon::parse($booking['depart_time'])->format('H:i')
+            : '';
+        $arrival = !empty($booking['arrival_time'])
+            ? Carbon::parse($booking['arrival_time'])->format('H:i')
+            : '';
+
+        return [$depart, $arrival];
+    }
+
+    private function formatEmployeePoint(array $booking): array
+    {
+        if (($booking['ispayment'] ?? 'N') !== 'Y') {
+            return ['0', 'รอชำระเงิน'];
+        }
+
+        $point = (string) ($booking['total_passenger'] ?? 0);
+        $status = ($booking['isearned'] ?? 'N') === 'Y' ? 'ถอนแล้ว' : 'ยังไม่ถอน';
+
+        return [$point, $status];
     }
 }

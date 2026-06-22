@@ -42,11 +42,35 @@
                         </div>
                         <div class="col-12 col-lg-4">
                             <strong>Code</strong>
-                            <p>{{ $broker->code }}</p>
+                            <p>{{ $broker->code ?? '-' }}</p>
                         </div>
                         <div class="col-12 col-lg-4">
                             <strong>Email</strong>
                             <p>{{ $broker->user?->email ?? '-' }}</p>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-start p-3 rounded bg-label-warning mt-1">
+                                <div class="avatar avatar-sm me-3 flex-shrink-0 mt-1">
+                                    <span class="avatar-initial rounded bg-warning">
+                                        <i class="icon-base ti tabler-discount icon-sm"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                        <h6 class="mb-0 fw-semibold text-warning">Discount</h6>
+                                        <span class="badge bg-warning text-dark fs-6">{{ number_format($broker->discount ?? 0, 2) }}%</span>
+                                        @if($broker->discount_type)
+                                        <span class="badge bg-label-warning">{{ $discountTypes[$broker->discount_type] ?? $broker->discount_type }}</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        การคำนวณราคาตั๋วตามปกติ แต่จะได้รับเครดิตคืนจากการขายตั๋ว
+                                        @if($broker->discount_type)
+                                        <span class="text-body">· คิดส่วนลดแบบ {{ $discountTypes[$broker->discount_type] ?? $broker->discount_type }}</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -196,6 +220,12 @@
             <div class="col-12 col-lg-6">
                 <x-form.float.input name="code" label="Code" :value="old('code', $broker->code)" :isrequire="false" />
             </div>
+            <div class="col-12 col-lg-6">
+                <x-form.float.input name="discount" label="Discount%" type="number" :value="old('discount', $broker->discount)" :isrequire="false" placeholder="0" min="0" step="0.01" />
+            </div>
+            <div class="col-12 col-lg-6">
+                <x-form.float.selection name="discount_type" label="Discount Type" :options="$discountTypes" :default="old('discount_type', $broker->discount_type)" :isrequire="false" :isempty="true" />
+            </div>
             <div class="col-12">
                 <x-form.float.input name="email" label="Email" type="email" :value="old('email', $broker->user?->email)" :isrequire="true" />
             </div>
@@ -208,7 +238,7 @@
 @stop
 
 @section('script')
-@if ($errors->hasAny(['name', 'code', 'email', 'password']))
+@if ($errors->hasAny(['name', 'code', 'email', 'password', 'discount', 'discount_type']))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var el = document.getElementById('modal-edit-broker');

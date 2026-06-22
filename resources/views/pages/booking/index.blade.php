@@ -21,9 +21,9 @@
             </a>
         </div>
         <div class="col-12">
-            @props(['method'=>'GET','action'=>''])
-            <form novalidate class="bs-validate" id="frm" method="{{ $method }}" action="{{ $action }}">
+            <form novalidate class="bs-validate" id="frm" method="GET" action="{{ route('booking.index') }}">
                 <input type="hidden" name="ispdf" id="ispdf" value="N">
+                <input type="hidden" name="export" id="export" value="">
                 <div class="row collapse" id="collapseExample">
                     <div class="col-12 col-md-4">
                         <x-station.selection name="depart_station_id" label="Station From" />
@@ -115,6 +115,19 @@
         </div>
     </div>
     <hr>
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="text-muted small">{{ count($bookings) }} รายการ</span>
+            <div class="btn-group">
+                <button type="button" id="exportExcel" class="btn btn-outline-success btn-sm">
+                    <i class="icon-base ti tabler-file-spreadsheet me-1"></i> Export Excel
+                </button>
+                <button type="button" id="exportPDF" class="btn btn-outline-danger btn-sm">
+                    <i class="icon-base ti tabler-file-type-pdf me-1"></i> Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
     <div class="row">
 
         <div class="col-12">
@@ -135,22 +148,6 @@
 
 
 @section('script')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tableexport/5.2.0/js/tableexport.min.js"></script>
-
-
-
-
-<script>
-    document.getElementById('exportExcel').addEventListener('click', function() {
-        let table = document.getElementById("bookingTable");
-        let wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, "booking-report.xlsx");
-    });
-
-</script>
-
 <script>
     function closeEmailModal() {
         // ปิด modal
@@ -186,17 +183,25 @@
             console.log("Selected range:", start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
         });
 
-        $('#exportPDF').on('click', function() {
-            $('#ispdf').val('Y');
-
-            // เปลี่ยน target ชั่วคราว
-            var form = $('#frm');
+        function submitBookingExport(type) {
+            const form = $('#frm');
+            $('#ispdf').val(type === 'pdf' ? 'Y' : 'N');
+            $('#export').val(type === 'excel' ? 'excel' : '');
             form.attr('target', '_blank');
-
             form.submit();
+            setTimeout(function () {
+                form.removeAttr('target');
+                $('#ispdf').val('N');
+                $('#export').val('');
+            }, 300);
+        }
 
-            // คืนค่ากลับเป็นปกติ (optional)
-            setTimeout(() => form.removeAttr('target'), 100);
+        $('#exportExcel').on('click', function () {
+            submitBookingExport('excel');
+        });
+
+        $('#exportPDF').on('click', function () {
+            submitBookingExport('pdf');
         });
 
         $('.iframe-modal').on('click', function() {

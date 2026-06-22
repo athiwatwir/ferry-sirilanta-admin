@@ -12,6 +12,12 @@
             <div class="col-12 col-lg-4">
                 <x-form.float.input name="code" label="code" />
             </div>
+            <div class="col-12 col-lg-4">
+                <x-form.float.input name="discount" label="discount" type="number" :value="old('discount')" :isrequire="false" placeholder="0" min="0" step="0.01" />
+            </div>
+            <div class="col-12 col-lg-4">
+                <x-form.float.selection name="discount_type" label="discount type" :options="$discountTypes" :default="old('discount_type')" :isrequire="false" :isempty="true" />
+            </div>
 
 
         </div>

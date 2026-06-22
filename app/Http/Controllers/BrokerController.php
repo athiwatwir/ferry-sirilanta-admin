@@ -33,7 +33,8 @@ class BrokerController extends Controller
     {
         //
         return view('pages.broker.create', [
-            'title' => 'Create Broker'
+            'title' => 'Create Broker',
+            'discountTypes' => SalesPartnerController::getDiscountTypes(),
         ]);
     }
 
@@ -64,6 +65,7 @@ class BrokerController extends Controller
             'title' => 'Broker > ' . $broker->name,
             'broker' => $broker,
             'transactions' => $transactions,
+            'discountTypes' => SalesPartnerController::getDiscountTypes(),
             'breadcrumbs' => [
                 'All Broker' => route('broker.index'),
                 'View' => ''
@@ -112,6 +114,8 @@ class BrokerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255',
+            'discount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|string|in:per_ticket,per_seat',
             'email' => [
                 'required',
                 'email',
@@ -121,10 +125,13 @@ class BrokerController extends Controller
             'password' => 'nullable|string|min:8',
         ]);
 
-        $broker->update([
+        $brokerData = [
             'name' => $validated['name'],
             'code' => $validated['code'] ?? null,
-        ]);
+            'discount' => $validated['discount'] ?? null,
+            'discount_type' => $validated['discount_type'] ?? null,
+        ];
+        $broker->update($brokerData);
 
 
         if ($broker->user) {

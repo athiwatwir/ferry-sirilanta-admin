@@ -34,23 +34,36 @@
 
                     <hr>
                     <div class="row">
-                        <div class="col-12 col-lg-3">
+                        <div class="col-12 col-lg-4">
                             <strong>Name</strong>
                             <p>{{ $agent->name }}</p>
                         </div>
-                        <div class="col-12 col-lg-3">
+                        <div class="col-12 col-lg-4">
                             <strong>Code</strong>
-                            <p>{{ $agent->code }}</p>
+                            <p>{{ $agent->code ?? '-' }}</p>
                         </div>
                         <div class="col-12 col-lg-4">
                             <strong>Email</strong>
                             <p>{{ $agent->user?->email ?? '-' }}</p>
                         </div>
-                        <div class="col-12 col-lg-2">
-                            <strong>Discount%</strong>
-                            <p>{{ $agent->discount }}</p>
+                        <div class="col-12">
+                            <div class="d-flex align-items-start p-3 rounded bg-label-primary mt-1">
+                                <div class="avatar avatar-sm me-3 flex-shrink-0 mt-1">
+                                    <span class="avatar-initial rounded bg-primary">
+                                        <i class="icon-base ti tabler-discount icon-sm"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                        <h6 class="mb-0 fw-semibold text-primary">Discount</h6>
+                                        <span class="badge bg-primary fs-6">{{ number_format($agent->discount ?? 0, 2) }}%</span>
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        การคำนวณราคาตั๋วจะลดราคาตอนชำระเงิน
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-
                     </div>
 
 

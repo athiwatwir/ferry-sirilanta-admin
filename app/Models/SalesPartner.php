@@ -36,7 +36,8 @@ class SalesPartner extends Model
         'type',
         'isactive',
         'agent_id',
-        'discount'
+        'discount',
+        'discount_type'
     ];
 
     public function brokerPoint()

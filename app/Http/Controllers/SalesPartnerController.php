@@ -19,6 +19,14 @@ class SalesPartnerController extends Controller
             'employee' => 'Employee',
         ];
     }
+
+    public static function getDiscountTypes()
+    {
+        return [
+            'per_ticket' => 'Per Ticket',
+            'per_seat' => 'Per Seat',
+        ];
+    }
     /**
      * Display a listing of the resource.
      */
@@ -76,6 +84,8 @@ class SalesPartnerController extends Controller
             'user.name' => 'required|string',
             'user.email' => 'required|email|unique:users,email',
             'user.password' => 'required|string',
+            'discount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|string|in:per_ticket,per_seat',
         ], [
             'name.required' => 'กรุณาระบุชื่อ',
             'user.name.required' => 'กรุณาระบุชื่อผู้ใช้งาน',
