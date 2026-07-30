@@ -7,6 +7,7 @@ use App\Models\BrokerPoint;
 use App\Models\SalesPartner;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SalesPartnerController extends Controller
 {
@@ -23,8 +24,8 @@ class SalesPartnerController extends Controller
     public static function getDiscountTypes()
     {
         return [
-            'per_ticket' => 'Per Ticket',
-            'per_seat' => 'Per Seat',
+            'amount' => 'Amount/จำนวเงิน',
+            'percentage' => 'Percentage/%',
         ];
     }
     /**
@@ -79,15 +80,36 @@ class SalesPartnerController extends Controller
      */
     public function store(Request $request)
     {
+        // ชื่อ Employee/Agent/Broker ใช้ร่วมกับชื่อ user login
+        $sharedName = $request->input('name') ?: data_get($request->input('user'), 'name');
+        if ($sharedName) {
+            $request->merge([
+                'name' => $sharedName,
+                'user' => array_merge($request->input('user', []), [
+                    'name' => $sharedName,
+                ]),
+            ]);
+        }
+
         $request->validate([
             'name' => 'required|string',
+            'code' => [
+                Rule::requiredIf(fn() => $request->input('type') === 'employee'),
+                'nullable',
+                'string',
+                Rule::when($request->input('type') === 'employee', ['size:8', 'regex:/^[A-Za-z0-9]{8}$/']),
+            ],
             'user.name' => 'required|string',
             'user.email' => 'required|email|unique:users,email',
             'user.password' => 'required|string',
             'discount' => 'nullable|numeric|min:0',
-            'discount_type' => 'nullable|string|in:per_ticket,per_seat',
+            'discount_type' => ['nullable', 'string', Rule::in(array_keys(self::getDiscountTypes()))],
+            'agent_api_id' => 'nullable|string|exists:agents,id',
         ], [
             'name.required' => 'กรุณาระบุชื่อ',
+            'code.required' => 'กรุณาระบุรหัส Code',
+            'code.size' => 'Code ต้องมีจำนวน 8 ตัวอักษรเท่านั้น',
+            'code.regex' => 'Code ต้องเป็นภาษาอังกฤษหรือตัวเลขเท่านั้น (8 ตัว)',
             'user.name.required' => 'กรุณาระบุชื่อผู้ใช้งาน',
             'user.email.required' => 'กรุณาระบุอีเมล',
             'user.email.email' => 'รูปแบบอีเมลไม่ถูกต้อง',
@@ -101,7 +123,7 @@ class SalesPartnerController extends Controller
         $salesPartner = SalesPartner::create($data);
         if ($salesPartner) {
             $user = User::create([
-                'name' => $request->user['name'],
+                'name' => $sharedName,
                 'email' => $request->user['email'],
                 'password' => $request->user['password'],
                 'sales_partner_id' => $salesPartner->id,

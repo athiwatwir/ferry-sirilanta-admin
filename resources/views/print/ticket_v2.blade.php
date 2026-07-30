@@ -21,7 +21,10 @@ $colors = [
     @foreach ($bookings as $index => $booking)
     @php
 
-    $user = isset($booking['user'])?[]:$booking['user'];
+    $user = isset($booking['user'])?$booking['user']:[];
+    $salesPartner = isset($booking['salesPartner'])?$booking['salesPartner']:[];
+
+    //dd($booking['salesPartner']);
     $extras = $booking['bookingRoutesX']??[];
     $bookingRoutes = $booking['bookingSubRoutes'];
     //$bookingRoutesX = $booking['bookingRoutesX'];

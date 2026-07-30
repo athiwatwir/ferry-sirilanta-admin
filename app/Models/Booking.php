@@ -122,4 +122,14 @@ class Booking extends Model
     {
         return $this->hasMany(SystemLog::class, 'booking_id', 'id');
     }
+
+    public function salesPartner()
+    {
+        return $this->hasOne(SalesPartner::class, 'id', 'sales_partner_id');
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
 }

@@ -12,7 +12,12 @@
 @parent
 <script>
     $(document).ready(function() {
-        $('#datatable').DataTable({
+        var $table = $('#{{ $id }}');
+        if (!$table.length || $.fn.DataTable.isDataTable($table)) {
+            return;
+        }
+
+        $table.DataTable({
             responsive: true
             , pageLength: 50
             , ordering: false
@@ -24,6 +29,8 @@
                 search: "SEARCH:"
                 , lengthMenu: "Show _MENU_ items"
                 , info: "Show _START_ to _END_ from _TOTAL_ items"
+                , zeroRecords: "ไม่พบข้อมูล"
+                , emptyTable: "ยังไม่มีรายการ"
                 , paginate: {
                     first: "First"
                     , last: "หน้าสุดท้าย"

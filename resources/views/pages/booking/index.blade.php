@@ -1,17 +1,9 @@
 @extends('layouts.default')
 
 @section('content')
-<style>
-    .booking-table td {
-        padding: 5px;
-    }
-
-</style>
 
 @if ($salesPartner && Auth::user()->role =='broker')
 @include('pages.booking.dashboard.broker')
-@elseif (Auth::user()->role == 'employee' && $employeeDashboard)
-@include('pages.booking.dashboard.employee')
 @endif
 <x-card>
     <div class="row">

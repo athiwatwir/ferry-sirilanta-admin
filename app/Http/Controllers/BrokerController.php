@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agent;
 use App\Models\AgentAccountTransection;
 use App\Models\Booking;
 use App\Models\SalesPartner;
 use App\Models\User;
+use App\Services\PartnerBookingListService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,9 @@ use Illuminate\Validation\Rule;
 
 class BrokerController extends Controller
 {
+    public function __construct(
+        private PartnerBookingListService $partnerBookings
+    ) {}
     /**
      * Display a listing of the resource.
      */
@@ -31,10 +36,22 @@ class BrokerController extends Controller
      */
     public function create()
     {
-        //
+        $apiAgents = Agent::where('type', 'API')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn(Agent $item) => [
+                $item->id => trim($item->name . ($item->code ? " ({$item->code})" : '')),
+            ])
+            ->all();
+
         return view('pages.broker.create', [
             'title' => 'Create Broker',
+            'breadcrumbs' => [
+                'All Broker' => route('broker.index'),
+                'Create' => '',
+            ],
             'discountTypes' => SalesPartnerController::getDiscountTypes(),
+            'apiAgents' => $apiAgents,
         ]);
     }
 
@@ -49,7 +66,7 @@ class BrokerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $broker = SalesPartner::with([
             'user',
@@ -61,16 +78,39 @@ class BrokerController extends Controller
             ? $broker->agentAccount->transections
             : collect();
 
-        return view('pages.broker.show', [
+        $bookingResult = $this->partnerBookings->search($request, $broker->id);
+        $bookings = $bookingResult['bookings'];
+
+        if ($request->input('export') === 'excel') {
+            return $this->partnerBookings->exportExcel($bookings, 'broker', 'broker-booking-report');
+        }
+
+        if ($request->input('ispdf') === 'Y') {
+            return $this->partnerBookings->exportPdf(
+                $bookings,
+                'broker',
+                $request->input('daterange'),
+                $bookingResult['startDate'],
+                $bookingResult['endDate'],
+                $request->input('date_type'),
+                'broker-booking-report'
+            );
+        }
+
+        return view('pages.broker.show', array_merge($bookingResult['filters'], [
             'title' => 'Broker > ' . $broker->name,
             'broker' => $broker,
             'transactions' => $transactions,
+            'bookings' => $bookings,
             'discountTypes' => SalesPartnerController::getDiscountTypes(),
+            'startDate' => $bookingResult['startDate'],
+            'endDate' => $bookingResult['endDate'],
+            'activeTab' => $request->input('tab', 'bookings'),
             'breadcrumbs' => [
                 'All Broker' => route('broker.index'),
-                'View' => ''
+                'View' => '',
             ],
-        ]);
+        ]));
     }
 
     /**
@@ -115,7 +155,7 @@ class BrokerController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255',
             'discount' => 'nullable|numeric|min:0',
-            'discount_type' => 'nullable|string|in:per_ticket,per_seat',
+            'discount_type' => ['nullable', 'string', Rule::in(array_keys(SalesPartnerController::getDiscountTypes()))],
             'email' => [
                 'required',
                 'email',
@@ -135,12 +175,14 @@ class BrokerController extends Controller
 
 
         if ($broker->user) {
-            $userData = ['email' => $validated['email']];
+            $userData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'code' => $validated['code'] ?? null,
+            ];
             if (!empty($validated['password'])) {
                 $userData['password'] = $validated['password'];
             }
-
-            $userData['code'] = $validated['code'];
             $broker->user->update($userData);
         }
 
@@ -192,8 +234,8 @@ class BrokerController extends Controller
 
         $transactions = $salesPartner?->agentAccount
             ? AgentAccountTransection::where('agent_account_id', $salesPartner->agentAccount->id)
-                ->orderBy('created_at', 'desc')
-                ->get()
+            ->orderBy('created_at', 'desc')
+            ->get()
             : collect();
 
         return view('pages.broker.transactions', [
@@ -240,7 +282,7 @@ class BrokerController extends Controller
         $data['code'] = $data['code'] ?? null;
         $broker->user()->create($data);
 
-        return redirect()->route('broker.user', $broker);
+        return redirect()->route('broker.show', $broker);
     }
 
     public function editUser(string $id)

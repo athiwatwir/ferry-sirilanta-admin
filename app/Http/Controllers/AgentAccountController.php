@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AgentAccount;
 use App\Models\AgentAccountTransection;
+use App\Exceptions\TwoC2PException;
+use App\Services\TwoC2PService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class AgentAccountController extends Controller
@@ -36,9 +39,28 @@ class AgentAccountController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(AgentAccount $agentAccount)
+    public function show(Request $request, AgentAccount $agentAccount)
     {
-        $agentAccount->load(['transections' => fn ($q) => $q->orderBy('created_at', 'desc'), 'salesPartner']);
+        // จาก 2C2P frontend return (query) → flash แล้วตัด query ออก
+        if ($request->filled('payment')) {
+            $status = (string) $request->input('payment');
+            $message = trim((string) $request->input('payment_msg', ''));
+            if ($message === '') {
+                $message = match ($status) {
+                    'success' => 'ชำระเงินสำเร็จ',
+                    'cancelled' => 'ยกเลิกการชำระเงินแล้ว',
+                    default => 'ชำระเงินไม่สำเร็จ',
+                };
+            }
+
+            $flashKey = $status === 'success' ? 'success' : ($status === 'cancelled' ? 'warning' : 'error');
+
+            return redirect()
+                ->route('agentAccount.show', $agentAccount)
+                ->with($flashKey, $message);
+        }
+
+        $agentAccount->load(['transections' => fn($q) => $q->orderBy('created_at', 'desc'), 'salesPartner']);
 
         return view('pages.agent-account.show', [
             'title' => 'Wallet',
@@ -48,10 +70,22 @@ class AgentAccountController extends Controller
     }
 
     /**
-     * เติมเงิน (Top up) - บันทึกสลิป จำนวนเงิน และเพิ่มรายการใน AgentAccountTransection
+     * เติมเงิน (Top up) - โอนเงิน / บัตรเครดิต / QR-Wallet (2C2P)
      */
     public function topUp(Request $request, AgentAccount $agentAccount)
     {
+        $paymentType = $request->input('payment_type', 'transfer');
+
+        if (!in_array($paymentType, ['transfer', 'card', 'etc'], true)) {
+            return redirect()
+                ->route('agentAccount.show', $agentAccount)
+                ->with('error', 'ช่องทางการชำระเงินไม่ถูกต้อง');
+        }
+
+        if (in_array($paymentType, ['card', 'etc'], true)) {
+            return $this->topUpViaTwoC2P($request, $agentAccount, $paymentType);
+        }
+
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
@@ -59,6 +93,7 @@ class AgentAccountController extends Controller
         ], [
             'slip.required' => 'กรุณาแนบสลิปการโอน',
             'amount.required' => 'กรุณาระบุจำนวนเงิน',
+            'amount.min' => 'จำนวนเงินต้องมากกว่า 0',
         ]);
 
         $imagePath = null;
@@ -81,6 +116,81 @@ class AgentAccountController extends Controller
         session()->flash('success', 'บันทึกคำขอเติมเงินเรียบร้อย รอการอนุมัติ');
 
         return redirect()->route('agentAccount.show', $agentAccount);
+    }
+
+    /**
+     * Top up ผ่าน 2C2P Hosted Payment Page
+     */
+    private function topUpViaTwoC2P(Request $request, AgentAccount $agentAccount, string $paymentType)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string|max:255',
+        ], [
+            'amount.required' => 'กรุณาระบุจำนวนเงิน',
+            'amount.min' => 'จำนวนเงินต้องมากกว่า 0',
+        ]);
+
+        $isCard = $paymentType === 'card';
+        $tag = $isCard ? '[CARD]' : '[ETC]';
+        $note = trim((string) $request->input('description', ''));
+        $description = $tag . ($note !== '' ? ' ' . $note : '');
+
+        $transaction = AgentAccountTransection::create([
+            'agent_account_id' => $agentAccount->id,
+            'type' => 'topup',
+            'amount' => $request->amount,
+            'description' => $description,
+            'image_path' => null,
+            'isapproved' => 'N',
+        ]);
+
+        $invoiceNo = 'WT' . str_replace('-', '', $transaction->id);
+
+        if ($isCard) {
+            $channels = ['CC'];
+            $profile = TwoC2PService::PROFILE_CREDIT;
+            $label = 'บัตรเครดิต';
+        } else {
+            $channels = (array) config('twoc2p.etc_payment_channels', ['THQR', 'DPAY', 'QRC', 'CSQR']);
+            $profile = TwoC2PService::PROFILE_ETC;
+            $label = 'QR / Wallet';
+        }
+
+        try {
+            $twoC2P = app(TwoC2PService::class);
+            $payment = $twoC2P->createPaymentToken([
+                'invoiceNo' => $invoiceNo,
+                'description' => 'Wallet Top Up #' . $invoiceNo,
+                'amount' => (float) $request->amount,
+                'currencyCode' => config('twoc2p.currency_code', 'THB'),
+                'paymentChannel' => $channels,
+                'merchantProfile' => $profile,
+                'frontendReturnUrl' => route('payment.2c2p.frontend'),
+                'backendReturnUrl' => route('payment.2c2p.backend'),
+                'userDefined1' => 'wallet_topup',
+                'userDefined2' => $agentAccount->id,
+                'userDefined3' => $transaction->id,
+                'userDefined4' => $profile,
+            ]);
+
+            if (!empty($payment['paymentToken'])) {
+                $twoC2P->rememberPaymentToken($invoiceNo, $payment['paymentToken'], $transaction->id);
+            }
+        } catch (TwoC2PException $e) {
+            Log::error('2C2P wallet top-up failed', [
+                'transaction_id' => $transaction->id,
+                'payment_type' => $paymentType,
+                'message' => $e->getMessage(),
+                'respCode' => $e->respCode,
+            ]);
+
+            return redirect()
+                ->route('agentAccount.show', $agentAccount)
+                ->with('error', "ไม่สามารถเปิดหน้าชำระ{$label}ได้: " . $e->getMessage());
+        }
+
+        return redirect()->away($payment['webPaymentUrl']);
     }
 
     /**

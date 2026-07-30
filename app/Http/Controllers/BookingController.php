@@ -7,6 +7,7 @@ use App\Models\Agent;
 use App\Models\Booking;
 use App\Models\SalesPartner;
 use App\Services\BookingService;
+use App\Services\EmployeePointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
@@ -18,7 +19,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class BookingController extends Controller
 {
     public function __construct(
-        private BookingService $bookingService
+        private BookingService $bookingService,
+        private EmployeePointService $employeePoints
     ) {}
 
     /**
@@ -27,6 +29,8 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $agentId = env('AGENT_ID');
+        $salesPartners = SalesPartner::where('agent_id', $agentId)->get()->pluck('agent_api_id');
+        $agentIds = $salesPartners->concat([$agentId]);
         //$conditionStr = 'b.agent_id = "' . $agentId . '"';
 
         //Default with last 7 days
@@ -106,10 +110,12 @@ class BookingController extends Controller
                 'ag.code as agent_code',
                 'b.agent_id',
                 'ag.logo as agent_logo',
-                'b.isearned'
+                'b.isearned',
+                'b.payment_method',
+                DB::raw('(select count(*) from booking_sub_routes bsr_cnt where bsr_cnt.booking_id = b.id) as sub_route_count')
             );
 
-        $query->where('b.agent_id', $agentId);
+        $query->whereIn('b.agent_id', $agentIds);
 
         if (Auth::user()->role != 'ADMIN') {
             //dd(Auth::user());
@@ -198,7 +204,11 @@ class BookingController extends Controller
         }
 
 
-        $bookings = json_decode(json_encode($bookings), true);
+        $bookings = json_decode(json_encode($bookings), true) ?: [];
+        $bookings = array_map(function (array $booking) {
+            $booking['point'] = $this->employeePoints->forBooking($booking);
+            return $booking;
+        }, $bookings);
 
         $sections = [];
         $tripTypes = $this->bookingService->getTripType();
@@ -219,23 +229,25 @@ class BookingController extends Controller
 
         $employeeDashboard = null;
         if (Auth::user()->role === 'employee') {
-            $userId = Auth::id();
-            $salesPartnerId = Auth::user()->sales_partner_id;
-
-            $salesBase = Booking::where('user_id', $userId)
-                ->where('sales_partner_id', $salesPartnerId)
-                ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
-                ->whereBetween('created_at', [$startDate, $endDate]);
+            $uniqueBookings = collect($bookings)->unique('id');
+            $cashBookings = $uniqueBookings->filter(
+                fn ($b) => strtolower((string) ($b['payment_method'] ?? '')) === 'cash'
+            );
+            $creditMethods = ['cc', 'cstoken', 'gcard', 'credit', 'credit_card'];
+            $creditBookings = $uniqueBookings->filter(
+                fn ($b) => in_array(strtolower((string) ($b['payment_method'] ?? '')), $creditMethods, true)
+            );
 
             $employeeDashboard = [
-                'ticket_sales_count' => (clone $salesBase)->count(),
-                'ticket_sales_amount' => (float) (clone $salesBase)->sum('totalamt'),
-                'pending_point' => (int) Booking::where('user_id', $userId)
-                    ->where('sales_partner_id', $salesPartnerId)
-                    ->where('isearned', 'N')
-                    ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
-                    ->selectRaw('COALESCE(SUM(adult_passenger + child_passenger + infant_passenger), 0) as total')
-                    ->value('total'),
+                'ticket_sales_count' => $uniqueBookings->count(),
+                'ticket_sales_amount' => (float) $uniqueBookings->sum(fn ($b) => (float) ($b['totalamt'] ?? 0)),
+                'pending_point' => (int) $uniqueBookings
+                    ->filter(fn ($b) => ($b['ispayment'] ?? 'N') === 'Y' && ($b['isearned'] ?? 'N') === 'N')
+                    ->sum(fn ($b) => (int) ($b['point'] ?? 0)),
+                'credit_amount' => (float) $creditBookings->sum(fn ($b) => (float) ($b['totalamt'] ?? 0)),
+                'credit_count' => $creditBookings->count(),
+                'cash_amount' => (float) $cashBookings->sum(fn ($b) => (float) ($b['totalamt'] ?? 0)),
+                'cash_count' => $cashBookings->count(),
             ];
         }
 
@@ -449,21 +461,70 @@ class BookingController extends Controller
 
         $headers = match ($role) {
             'agent' => [
-                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
-                'Price', 'Discount', 'Nett Price', 'Route', 'Departure', 'Arrival', 'Status', 'Agent Ref.',
+                'Booking Date',
+                'Travel Date',
+                'Invoice No',
+                'Ticket No',
+                'Type',
+                'Customer',
+                'Pax',
+                'Price',
+                'Discount',
+                'Nett Price',
+                'Route',
+                'Departure',
+                'Arrival',
+                'Status',
+                'Agent Ref.',
             ],
             'broker' => [
-                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
-                'Use Credit', 'Route', 'Departure', 'Arrival', 'Status',
+                'Booking Date',
+                'Travel Date',
+                'Invoice No',
+                'Ticket No',
+                'Type',
+                'Customer',
+                'Pax',
+                'Use Credit',
+                'Route',
+                'Departure',
+                'Arrival',
+                'Status',
             ],
             'employee' => [
-                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
-                'Price', 'Processing Fee', 'Total Price', 'Route', 'Departure', 'Arrival', 'Status',
-                'Point', 'Point Status',
+                'Booking Date',
+                'Travel Date',
+                'Invoice No',
+                'Ticket No',
+                'Type',
+                'Customer',
+                'Pax',
+                'Price',
+                'Processing Fee',
+                'Total Price',
+                'Route',
+                'Departure',
+                'Arrival',
+                'Status',
+                'Point',
+                'Point Status',
             ],
             default => [
-                'Booking Date', 'Travel Date', 'Invoice No', 'Ticket No', 'Type', 'Customer', 'Pax',
-                'Price', 'Processing Fee', 'Total Price', 'Route', 'Departure', 'Arrival', 'Status', 'Agent Ref.',
+                'Booking Date',
+                'Travel Date',
+                'Invoice No',
+                'Ticket No',
+                'Type',
+                'Customer',
+                'Pax',
+                'Price',
+                'Processing Fee',
+                'Total Price',
+                'Route',
+                'Departure',
+                'Arrival',
+                'Status',
+                'Agent Ref.',
             ],
         };
 
@@ -560,7 +621,7 @@ class BookingController extends Controller
             return ['0', 'รอชำระเงิน'];
         }
 
-        $point = (string) ($booking['total_passenger'] ?? 0);
+        $point = (string) $this->employeePoints->forBooking($booking);
         $status = ($booking['isearned'] ?? 'N') === 'Y' ? 'ถอนแล้ว' : 'ยังไม่ถอน';
 
         return [$point, $status];

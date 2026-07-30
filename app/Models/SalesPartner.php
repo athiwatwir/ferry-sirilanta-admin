@@ -37,7 +37,8 @@ class SalesPartner extends Model
         'isactive',
         'agent_id',
         'discount',
-        'discount_type'
+        'discount_type',
+        'agent_api_id'
     ];
 
     public function brokerPoint()
@@ -58,5 +59,10 @@ class SalesPartner extends Model
     public function agentAccount()
     {
         return $this->hasOne(AgentAccount::class, 'sales_partner_id', 'id');
+    }
+
+    public function agentApi()
+    {
+        return $this->belongsTo(Agent::class, 'agent_api_id', 'id');
     }
 }

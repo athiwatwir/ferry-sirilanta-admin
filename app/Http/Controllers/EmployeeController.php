@@ -2,16 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UtilHelper;
 use App\Models\AgentAccount;
 use App\Models\AgentAccountTransection;
 use App\Models\Booking;
 use App\Models\SalesPartner;
+use App\Services\EmployeePointService;
+use App\Services\PartnerBookingListService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
 {
+    public function __construct(
+        private PartnerBookingListService $partnerBookings,
+        private EmployeePointService $employeePoints
+    ) {}
     /**
      * Display a listing of the resource.
      */
@@ -19,13 +30,7 @@ class EmployeeController extends Controller
     {
         $brokers = SalesPartner::with('brokerPoint', 'user')->where('type', 'employee')->where('agent_id', env('AGENT_ID'))->get();
 
-        $points = Booking::whereIn('sales_partner_id', $brokers->pluck('id'))
-            ->where('ispayment', 'Y')
-            ->where('isearned', 'N')
-            ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
-            ->selectRaw('sales_partner_id, sum(adult_passenger + child_passenger + infant_passenger) as point')
-            ->groupBy('sales_partner_id')
-            ->pluck('point', 'sales_partner_id');
+        $points = $this->employeePoints->pendingTotalsByPartnerIds($brokers->pluck('id'));
 
         foreach ($brokers as $broker) {
             $broker->point = (int) ($points[$broker->id] ?? 0);
@@ -65,9 +70,13 @@ class EmployeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $employee = SalesPartner::with('brokerPoint', 'user', 'agentAccount')->find($id);
+        $employee = SalesPartner::with('brokerPoint', 'user', 'agentAccount')->findOrFail($id);
+
+        if ($employee->type !== 'employee') {
+            abort(404);
+        }
 
         // ดึง transactions จาก AgentAccount
         $transactions = collect();
@@ -78,27 +87,39 @@ class EmployeeController extends Controller
                 ->get();
         }
 
-        // คำนวณ point รวมจากจำนวนผู้โดยสารใน booking ที่ยังไม่ถอน (isearned = 'N') และชำระเงินแล้วเท่านั้น (ispayment = 'Y')
-        $bookings = Booking::where('sales_partner_id', $id)
-            ->where('ispayment', 'Y')
-            ->where('isearned', 'N')
-            ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
-            ->get();
+        $employee->point = $this->employeePoints->pendingTotalForPartner($id);
 
-        $totalPoint = $bookings->sum(function ($booking) {
-            return $booking->adult_passenger + $booking->child_passenger + $booking->infant_passenger;
-        });
-        $employee->point = $totalPoint;
+        $bookingResult = $this->partnerBookings->search($request, $employee->id);
+        $bookings = $bookingResult['bookings'];
 
-        return view('pages.employee.show', [
+        if ($request->input('export') === 'excel') {
+            return $this->partnerBookings->exportExcel($bookings, 'employee', 'employee-booking-report');
+        }
+
+        if ($request->input('ispdf') === 'Y') {
+            return $this->partnerBookings->exportPdf(
+                $bookings,
+                'employee',
+                $request->input('daterange'),
+                $bookingResult['startDate'],
+                $bookingResult['endDate'],
+                $request->input('date_type'),
+                'employee-booking-report'
+            );
+        }
+
+        return view('pages.employee.show', array_merge($bookingResult['filters'], [
             'title' => 'Employee > ' . $employee->name,
             'breadcrumbs' => [
                 'All Employee' => route('employee.index'),
-                'View' => ''
+                'View' => '',
             ],
             'employee' => $employee,
             'transactions' => $transactions,
-        ]);
+            'bookings' => $bookings,
+            'startDate' => $bookingResult['startDate'],
+            'endDate' => $bookingResult['endDate'],
+        ]));
     }
 
     /**
@@ -124,7 +145,12 @@ class EmployeeController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:255',
+            'code' => [
+                'required',
+                'string',
+                'size:8',
+                'regex:/^[A-Za-z0-9]{8}$/',
+            ],
             'email' => [
                 'required',
                 'email',
@@ -132,36 +158,51 @@ class EmployeeController extends Controller
                 Rule::unique('users', 'email')->ignore($userId),
             ],
             'password' => 'nullable|string|min:8',
+        ], [
+            'name.required' => 'กรุณาระบุชื่อ',
+            'code.required' => 'กรุณาระบุรหัส Code',
+            'code.size' => 'Code ต้องมีจำนวน 8 ตัวอักษรเท่านั้น',
+            'code.regex' => 'Code ต้องเป็นภาษาอังกฤษหรือตัวเลขเท่านั้น (8 ตัว)',
+            'email.required' => 'กรุณาระบุอีเมล',
+            'email.email' => 'รูปแบบอีเมลไม่ถูกต้อง',
+            'email.unique' => 'อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น',
+            'password.min' => 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร',
         ]);
 
-        $brokerData = [
+        $employee->update([
             'name' => $validated['name'],
-        ];
-        if (array_key_exists('code', $validated)) {
-            $brokerData['code'] = $validated['code'] === '' || $validated['code'] === null
-                ? null
-                : $validated['code'];
-        }
-        $employee->update($brokerData);
+            'code' => $validated['code'],
+        ]);
 
         if ($employee->user) {
             $userData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
+                'code' => $validated['code'],
             ];
-            if (array_key_exists('code', $validated)) {
-                $userData['code'] = $validated['code'] === '' || $validated['code'] === null
-                    ? null
-                    : $validated['code'];
-            }
             if (!empty($validated['password'])) {
                 $userData['password'] = $validated['password'];
             }
-            $userData['code'] = $validated['code'];
             $employee->user->update($userData);
         }
 
         return redirect()->route('employee.show', $employee)->with('success', 'อัปเดตข้อมูล Employee เรียบร้อย');
+    }
+
+    public function changeStatus(string $id)
+    {
+        $employee = SalesPartner::findOrFail($id);
+
+        if ($employee->type !== 'employee') {
+            abort(404);
+        }
+
+        $employee->isactive = $employee->isactive === 'Y' ? 'N' : 'Y';
+        $employee->save();
+
+        return redirect()
+            ->back()
+            ->with('success', $employee->isactive === 'Y' ? 'เปิดใช้งาน Employee แล้ว' : 'ปิดใช้งาน Employee แล้ว');
     }
 
     /**
@@ -184,23 +225,23 @@ class EmployeeController extends Controller
                 'totalPoint' => 0,
                 'bookings' => collect(),
                 'transactions' => collect(),
+                'tripTypes' => [
+                    'O' => 'One-Way',
+                    'R' => 'Return',
+                    'M' => 'Multiple',
+                ],
             ]);
         }
 
-        // ดึง bookings ที่ยังไม่ถอน point และต้องชำระเงินแล้วเท่านั้น (ispayment = 'Y')
-        $bookings = Booking::where('user_id', $userId)
-            ->where('sales_partner_id', $salesPartnerId)
-            ->where('ispayment', 'Y')
-            ->where('isearned', 'N')
-            ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
-            ->orderBy('departdate', 'desc')
-            ->get()
-            ->map(function ($booking) {
-                $booking->point = $booking->adult_passenger + $booking->child_passenger + $booking->infant_passenger;
-                return $booking;
-            });
+        $bookings = $this->employeePoints->attachPoint(
+            $this->employeePoints->applyPendingFilters(
+                Booking::where('user_id', $userId)->where('sales_partner_id', $salesPartnerId)
+            )
+                ->orderBy('departdate', 'desc')
+                ->get()
+        );
 
-        $totalPoint = $bookings->sum('point');
+        $totalPoint = $this->employeePoints->sumPoints($bookings);
 
         // ดึง transactions จาก AgentAccount
         $transactions = collect();
@@ -217,6 +258,11 @@ class EmployeeController extends Controller
             'totalPoint' => $totalPoint,
             'bookings' => $bookings,
             'transactions' => $transactions,
+            'tripTypes' => [
+                'O' => 'One-Way',
+                'R' => 'Return',
+                'M' => 'Multiple',
+            ],
         ]);
     }
 
@@ -225,19 +271,10 @@ class EmployeeController extends Controller
      */
     public function earnPointBookings(string $id)
     {
-        $bookings = Booking::where('sales_partner_id', $id)
-            ->where('ispayment', 'Y')
-            ->where('isearned', 'N')
-            ->whereNotIn('status', ['delete', 'void', 'VO', 'EXPIRED'])
-            ->orderBy('departdate', 'desc')
-            ->get()
-            ->map(function ($booking) {
-                $booking->point = $booking->adult_passenger + $booking->child_passenger + $booking->infant_passenger;
-                return $booking;
-            });
+        $bookings = $this->employeePoints->pendingBookingsForPartner($id);
 
         return response()->json([
-            'bookings' => $bookings->map(fn($b) => [
+            'bookings' => $bookings->map(fn ($b) => [
                 'id' => $b->id,
                 'bookingno' => $b->bookingno,
                 'departdate' => $b->departdate?->format('d/m/Y'),
@@ -247,6 +284,149 @@ class EmployeeController extends Controller
                 'point' => $b->point,
             ]),
         ]);
+    }
+
+    /**
+     * หน้าถอน Point — กรองตามช่วงวันที่ + สรุปผล + export
+     */
+    public function withdrawPoint(Request $request, string $id)
+    {
+        $employee = SalesPartner::with('user', 'agentAccount')->findOrFail($id);
+        if ($employee->type !== 'employee') {
+            abort(404);
+        }
+
+        $dateType = $request->input('date_type', 'travel_date');
+        $daterange = $request->input('daterange');
+        $startDate = Carbon::now()->subDays(29)->startOfDay();
+        $endDate = Carbon::now()->endOfDay();
+        $filtered = $request->boolean('filtered') || $request->filled('daterange') || $request->filled('export') || $request->input('ispdf') === 'Y';
+
+        if (!empty($daterange)) {
+            [$start, $end] = UtilHelper::parseDateRange($daterange);
+            $startDate = Carbon::parse($start)->startOfDay();
+            $endDate = Carbon::parse($end)->endOfDay();
+        }
+
+        $bookings = collect();
+        $summary = $this->employeePoints->summarize(collect());
+
+        if ($filtered) {
+            $bookings = $this->employeePoints->pendingBookingsInDateRange($id, $dateType, $startDate, $endDate);
+            $summary = $this->employeePoints->summarize($bookings);
+        }
+
+        if ($request->input('export') === 'excel') {
+            return $this->exportWithdrawPointExcel($employee, $bookings, $summary, $daterange, $startDate, $endDate, $dateType);
+        }
+
+        if ($request->input('ispdf') === 'Y') {
+            return $this->exportWithdrawPointPdf($employee, $bookings, $summary, $daterange, $startDate, $endDate, $dateType);
+        }
+
+        return view('pages.employee.withdraw-point', [
+            'title' => 'ถอน Point > ' . $employee->name,
+            'breadcrumbs' => [
+                'All Employee' => route('employee.index'),
+                'View' => route('employee.show', $employee),
+                'ถอน Point' => '',
+            ],
+            'employee' => $employee,
+            'bookings' => $bookings,
+            'summary' => $summary,
+            'filtered' => $filtered,
+            'date_type' => $dateType,
+            'daterange' => $daterange,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'tripTypes' => [
+                'O' => 'One-Way',
+                'R' => 'Return',
+                'M' => 'Multiple',
+            ],
+        ]);
+    }
+
+    /**
+     * ยืนยันถอน Point จาก booking ที่เลือก
+     */
+    public function withdrawPointConfirm(Request $request, string $id)
+    {
+        $request->validate([
+            'date_type' => 'required|in:booking_date,travel_date',
+            'daterange' => 'required|string',
+            'booking_ids' => 'required|array|min:1',
+            'booking_ids.*' => 'uuid',
+        ], [
+            'daterange.required' => 'กรุณาเลือกช่วงวันที่ก่อนยืนยันถอน Point',
+            'booking_ids.required' => 'กรุณาเลือก booking ที่ต้องการถอน Point',
+            'booking_ids.min' => 'กรุณาเลือกอย่างน้อย 1 รายการ',
+        ]);
+
+        $employee = SalesPartner::with('agentAccount')->findOrFail($id);
+        if ($employee->type !== 'employee') {
+            abort(404);
+        }
+
+        [$start, $end] = UtilHelper::parseDateRange($request->daterange);
+        $startDate = Carbon::parse($start)->startOfDay();
+        $endDate = Carbon::parse($end)->endOfDay();
+
+        $bookings = $this->employeePoints
+            ->pendingBookingsInDateRange($id, $request->date_type, $startDate, $endDate)
+            ->whereIn('id', $request->booking_ids)
+            ->values();
+
+        if ($bookings->isEmpty()) {
+            return redirect()
+                ->route('employee.withdrawPoint', [
+                    'employee' => $id,
+                    'date_type' => $request->date_type,
+                    'daterange' => $request->daterange,
+                    'filtered' => 1,
+                ])
+                ->with('warning', 'ไม่พบรายการจองที่สามารถถอน Point ได้จากรายการที่เลือก');
+        }
+
+        if (!$employee->agentAccount) {
+            AgentAccount::create([
+                'sales_partner_id' => $id,
+                'type' => 'point',
+                'credit_balance' => 0,
+                'wallet_balance' => 0,
+                'credit_limit' => 0,
+            ]);
+            $employee = SalesPartner::with('agentAccount')->findOrFail($id);
+        }
+
+        $bookingIds = $bookings->pluck('id')->all();
+        $totalPoint = $this->employeePoints->sumPoints($bookings);
+
+        $updated = Booking::where('sales_partner_id', $id)
+            ->where('isearned', 'N')
+            ->whereIn('id', $bookingIds)
+            ->update(['isearned' => 'Y']);
+
+        if ($totalPoint > 0 && $updated > 0) {
+            $bookingNos = $bookings->pluck('bookingno')->all();
+            $description = 'ถอน point จาก ' . $updated . ' รายการ: ' . implode(', ', array_slice($bookingNos, 0, 5));
+            if (count($bookingNos) > 5) {
+                $description .= ' และอีก ' . (count($bookingNos) - 5) . ' รายการ';
+            }
+            $description .= ' | ช่วง ' . $request->daterange;
+
+            AgentAccountTransection::create([
+                'agent_account_id' => $employee->agentAccount->id,
+                'type' => 'withdraw',
+                'amount' => $totalPoint,
+                'description' => $description,
+                'isapproved' => 'Y',
+            ]);
+        }
+
+        return redirect()
+            ->route('employee.show', $employee)
+            ->with('success', "ถอน Point สำเร็จ {$updated} รายการ รวม {$totalPoint} point");
     }
 
     /**
@@ -280,10 +460,8 @@ class EmployeeController extends Controller
             ->whereIn('id', $request->booking_ids)
             ->get();
 
-        // คำนวณ point รวม (จำนวนผู้โดยสารทั้งหมด)
-        $totalPoint = $bookings->sum(function ($booking) {
-            return $booking->adult_passenger + $booking->child_passenger + $booking->infant_passenger;
-        });
+        // คำนวณ point รวม
+        $totalPoint = $this->employeePoints->sumPoints($bookings);
 
         // อัพเดท isearned = Y
         $updated = Booking::where('sales_partner_id', $id)
@@ -314,5 +492,87 @@ class EmployeeController extends Controller
             'updated_count' => $updated,
             'total_point' => $totalPoint,
         ]);
+    }
+
+    private function exportWithdrawPointExcel(
+        SalesPartner $employee,
+        $bookings,
+        array $summary,
+        ?string $daterange,
+        Carbon $startDate,
+        Carbon $endDate,
+        string $dateType
+    ): StreamedResponse {
+        $filename = 'withdraw-point-' . ($employee->code ?: $employee->id) . '-' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($bookings, $summary, $daterange, $startDate, $endDate, $dateType, $employee) {
+            $tripTypes = [
+                'O' => 'One-Way',
+                'R' => 'Return',
+                'M' => 'Multiple',
+            ];
+            $handle = fopen('php://output', 'w');
+            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            fputcsv($handle, ['Employee', $employee->name]);
+            fputcsv($handle, ['Code', $employee->code ?? '']);
+            fputcsv($handle, [
+                $dateType === 'booking_date' ? 'Booking Date' : 'Travel Date',
+                $daterange ?: ($startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y')),
+            ]);
+            fputcsv($handle, ['Total Point', $summary['total_point']]);
+            fputcsv($handle, ['Total Amount', number_format($summary['total_amount'], 2, '.', '')]);
+            fputcsv($handle, ['Booking Count', $summary['booking_count']]);
+            fputcsv($handle, ['Passenger Count', $summary['passenger_count']]);
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                'Booking Date', 'Travel Date', 'Booking No', 'Trip Type', 'Adult', 'Point', 'Amount',
+            ]);
+
+            foreach ($bookings as $booking) {
+                fputcsv($handle, [
+                    $booking->created_at?->format('d/m/Y H:i') ?? '',
+                    $booking->departdate?->format('d/m/Y') ?? '',
+                    $booking->bookingno,
+                    $tripTypes[$booking->trip_type] ?? ($booking->trip_type ?? ''),
+                    $booking->adult_passenger,
+                    $booking->point,
+                    number_format((float) $booking->totalamt, 2, '.', ''),
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    private function exportWithdrawPointPdf(
+        SalesPartner $employee,
+        $bookings,
+        array $summary,
+        ?string $daterange,
+        Carbon $startDate,
+        Carbon $endDate,
+        string $dateType
+    ) {
+        $pdf = Pdf::loadView('pages.employee.pdf.withdraw-point', [
+            'employee' => $employee,
+            'bookings' => $bookings,
+            'summary' => $summary,
+            'daterange' => $daterange,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'date_type' => $dateType === 'booking_date' ? 'Booking Date' : 'Travel Date',
+            'tripTypes' => [
+                'O' => 'One-Way',
+                'R' => 'Return',
+                'M' => 'Multiple',
+            ],
+        ])
+            ->setOption(['dpi' => 150])
+            ->setPaper('A4', 'landscape');
+
+        return $pdf->stream('withdraw-point-' . now()->format('Ymd_His') . '.pdf');
     }
 }

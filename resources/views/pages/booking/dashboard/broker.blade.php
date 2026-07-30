@@ -37,19 +37,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 col-6">
-                            <a href="{{ route('broker.transactions') }}" class="text-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="badge rounded bg-label-success me-4 p-2">
-                                        <i class="icon-base ti tabler-receipt icon-lg"></i>
-                                    </div>
-                                    <div class="card-info">
-                                        <h5 class="mb-0">ประวัติ</h5>
-                                        <small>ประวัติการทำรายการ</small>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
+
                     </div>
                 </div>
             </div>

@@ -91,6 +91,11 @@
 </head>
 <body>
 
+    @php
+    $salesPartner = isset($booking['salesPartner'])?$booking['salesPartner']:[];
+    $user = isset($booking['user'])?$booking['user']:[];
+    @endphp
+
     @foreach ($booking->bookingSubRoutes as $bookingSubRoute)
     <img class="banner" src="{{ $bannerBase64 }}" alt="Banner">
 
@@ -124,7 +129,7 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: left;">
-                       Invoice No.: {{ $booking->bookingno }}
+                        Invoice No.: {{ $booking->bookingno }}
                     </td>
                     <td style="text-align: right; white-space: nowrap;">
                         {{ number_format($booking->totalamt ?? 0, 2) }}
@@ -134,7 +139,7 @@
                     <td colspan="2">Departure from:<br> {{ $bookingSubRoute->route->departStation->name_en ?? '-' }}
                         @if(!empty($bookingSubRoute->description))
                         <br>
-                         <small></small>{{ $bookingSubRoute->description }}</small>
+                        <small></small>{{ $bookingSubRoute->description }}</small>
                         @endif
                     </td>
                 </tr>
@@ -155,7 +160,7 @@
                     <td colspan="2">Destination to:<br> {{ $bookingSubRoute->route->destStation->name_en ?? '-' }}
                         @if(!empty($bookingSubRoute->description2))
                         <br>
-                         <small></small>{{ $bookingSubRoute->description2 }}</small>
+                        <small></small>{{ $bookingSubRoute->description2 }}</small>
                         @endif
                     </td>
                 </tr>
@@ -178,12 +183,12 @@
         </div>
         <div class="line"></div>
         <div class="section">
-            Branch Office: Online RSVN<br>
+            Issue By: {{ isset($salesPartner['name'])?$salesPartner['name']:'Online RSVN' }}<br>
             Issue date: {{ \Carbon\Carbon::parse($booking->complete_date)->format('d/m/Y H:i') }}
         </div>
     </div>
     <div class="line"></div>
-   <br>
+    <br>
     <div class="" style="font-size: 14pt;font-weight: bold;text-align: center;">Non-Refundable Ticket</div>
 
     @if (!$loop->last)

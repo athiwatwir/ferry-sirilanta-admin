@@ -9,7 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 /**
  * Class Agent
@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
  * @property string|null $is_use_api
  * @property string|null $logo
  * @property string|null $description
+ * @property string|null $public_key
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -32,6 +33,8 @@ class Agent extends Model
     use HasUuids;
     protected $table = 'agents';
     public $incrementing = false;
+
+    public const PUBLIC_KEY_LENGTH = 200;
 
     protected $fillable = [
         'name',
@@ -49,40 +52,65 @@ class Agent extends Model
         'prefix',
         'is_regular_open',
         'is_child_open',
-        'is_infant_open'
+        'is_infant_open',
+        'public_key',
     ];
 
-    /*
-    protected function activeRouteAmt(): Attribute
+    protected static function booted(): void
     {
-        return Attribute::make(
-            get: function () {
-                self::agentSubRoutes()
+        static::creating(function (Agent $agent) {
+            $agent->ensurePublicKey();
+        });
 
-                return sprintf('%02d:%02d', $diff->h + ($diff->d * 24), $diff->i);
-            }
-        );
+        static::updating(function (Agent $agent) {
+            $agent->ensurePublicKey();
+        });
     }
-        */
 
+    /**
+     * สร้าง public_key ความยาว 200 ตัวถ้ายังไม่มี / ความยาวไม่ถูกต้อง
+     */
+    public function ensurePublicKey(): void
+    {
+        if (blank($this->public_key) || strlen((string) $this->public_key) !== self::PUBLIC_KEY_LENGTH) {
+            $this->public_key = static::generatePublicKey();
+        }
+    }
+
+    /**
+     * สร้าง public_key ใหม่ความยาว 200 ตัว (A-Za-z0-9)
+     */
+    public static function generatePublicKey(int $length = self::PUBLIC_KEY_LENGTH): string
+    {
+        return Str::random($length);
+    }
+
+    /**
+     * บังคับสร้าง public_key ใหม่ (เช่น rotate key)
+     */
+    public function regeneratePublicKey(): static
+    {
+        $this->public_key = static::generatePublicKey();
+
+        return $this;
+    }
 
     public function wallet()
     {
         return $this->belongsTo(Wallet::class);
     }
 
-   public function agentSubRoutes()
+    public function agentSubRoutes()
     {
         return $this->hasMany(AgentSubRoute::class, 'agent_id', 'id')
             ->select('agent_sub_routes.*')
             ->join('sub_routes', 'agent_sub_routes.sub_route_id', '=', 'sub_routes.id')
             ->join('routes', 'sub_routes.route_id', '=', 'routes.id')
             ->join('stations as depart_stations', 'routes.depart_station_id', '=', 'depart_stations.id')
-            ->orderBy('depart_stations.sort', 'asc') // ✅ sort ตาม departStation.sort
+            ->orderBy('depart_stations.sort', 'asc')
             ->orderBy('sub_routes.depart_time')
-            ->with(['subRoute.route.departStation']); // preload ความสัมพันธ์เพื่อใช้ข้อมูลทีหลัง
+            ->with(['subRoute.route.departStation']);
     }
-
 
     public function activeAgentSubRoutes()
     {

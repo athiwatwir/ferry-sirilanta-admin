@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InfoImageController;
+use App\Http\Controllers\Payment\TwoC2PController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PriceStrategyController;
 use App\Http\Controllers\PriceStrategyLineController;
@@ -55,9 +56,16 @@ Route::controller(PrintController::class)->group(function () {
     Route::post('/p/report-account', 'reportAccount')->name('print.reportAccount');
 });
 
+Route::controller(TwoC2PController::class)->prefix('payment/2c2p')->group(function () {
+    Route::match(['get', 'post'], '/frontend', 'frontend')->name('payment.2c2p.frontend');
+    Route::post('/backend', 'backend')->name('payment.2c2p.backend');
+});
+
 Route::middleware('auth')->group(function () {
 
     Route::get('/', [BookingController::class, 'index']);
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -166,6 +174,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/employee/point', 'point')->name('employee.point');
         Route::get('/employee/{employee}/earn-point-bookings', 'earnPointBookings')->name('employee.earnPointBookings');
         Route::post('/employee/{employee}/earn-point', 'earnPoint')->name('employee.earnPoint');
+        Route::get('/employee/{employee}/withdraw-point', 'withdrawPoint')->name('employee.withdrawPoint');
+        Route::post('/employee/{employee}/withdraw-point', 'withdrawPointConfirm')->name('employee.withdrawPointConfirm');
+        Route::post('/employee/{employee}/change-status', 'changeStatus')->name('employee.changeStatus');
     });
 
     Route::controller(AgentAccountController::class)->group(function () {

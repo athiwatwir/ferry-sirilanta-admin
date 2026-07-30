@@ -58,7 +58,7 @@
                                 <div class="flex-grow-1">
                                     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                         <h6 class="mb-0 fw-semibold text-warning">Discount</h6>
-                                        <span class="badge bg-warning text-dark fs-6">{{ number_format($broker->discount ?? 0, 2) }}%</span>
+                                        <span class="badge bg-warning text-dark fs-6">{{ number_format($broker->discount ?? 0, 2) }}</span>
                                         @if($broker->discount_type)
                                         <span class="badge bg-label-warning">{{ $discountTypes[$broker->discount_type] ?? $broker->discount_type }}</span>
                                         @endif
@@ -82,23 +82,41 @@
     <div class="col-12 ">
         <x-card>
             <div class="nav-align-top">
+                @php $tab = $activeTab ?? 'bookings'; @endphp
                 <ul class="nav nav-pills mb-4" role="tablist">
                     <li class="nav-item">
-                        <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-transactions" aria-selected="true">
+                        <button type="button" class="nav-link {{ $tab === 'bookings' ? 'active' : '' }}" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-bookings" aria-selected="{{ $tab === 'bookings' ? 'true' : 'false' }}">
+                            <i class="icon-base ti tabler-ticket me-1"></i>รายการจอง
+                            <span class="badge bg-label-primary ms-1">{{ count($bookings) }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link {{ $tab === 'transactions' ? 'active' : '' }}" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-transactions" aria-selected="{{ $tab === 'transactions' ? 'true' : 'false' }}">
                             <i class="icon-base ti tabler-receipt me-1"></i>Transaction
                         </button>
                     </li>
                     <li class="nav-item">
-                        <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-users" aria-selected="false">
+                        <button type="button" class="nav-link {{ $tab === 'users' ? 'active' : '' }}" role="tab" data-bs-toggle="tab" data-bs-target="#broker-tab-users" aria-selected="{{ $tab === 'users' ? 'true' : 'false' }}">
                             <i class="icon-base ti tabler-users-group me-1"></i>รายชื่อพนักงาน Staff ({{ $broker->users->count() }})
                         </button>
                     </li>
                 </ul>
 
                 <div class="tab-content p-0">
-                    <div class="tab-pane fade show active" id="broker-tab-transactions" role="tabpanel">
+                    <div class="tab-pane fade p-3 {{ $tab === 'bookings' ? 'show active' : '' }}" id="broker-tab-bookings" role="tabpanel">
+                        @include('pages.booking.partials.partner-search', [
+                        'formId' => 'frm-broker-bookings',
+                        'formAction' => route('broker.show', $broker),
+                        'clearUrl' => route('broker.show', ['broker' => $broker, 'tab' => 'bookings']),
+                        'collapseId' => 'brokerBookingSearch',
+                        'tabValue' => 'bookings',
+                        'tablePartial' => 'pages.booking.table.broker',
+                        ])
+                    </div>
+
+                    <div class="tab-pane fade p-3 {{ $tab === 'transactions' ? 'show active' : '' }}" id="broker-tab-transactions" role="tabpanel">
                         <p class="text-muted small mb-3">รายการ Transaction จาก Agent Account</p>
-                        <table class="table table-hover table-sm mb-0">
+                        <x-table.datatabble id="broker-transactions-datatable">
                             <thead>
                                 <tr>
                                     <th>วันที่</th>
@@ -109,7 +127,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($transactions as $tx)
+                                @foreach($transactions as $tx)
                                 <tr>
                                     <td>{{ $tx->created_at?->format('d/m/Y H:i') }}</td>
                                     <td>
@@ -129,16 +147,12 @@
                                         @endif
                                     </td>
                                 </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-3">ยังไม่มีรายการ Transaction</td>
-                                </tr>
-                                @endforelse
+                                @endforeach
                             </tbody>
-                        </table>
+                        </x-table.datatabble>
                     </div>
 
-                    <div class="tab-pane fade" id="broker-tab-users" role="tabpanel">
+                    <div class="tab-pane fade p-3 {{ $tab === 'users' ? 'show active' : '' }}" id="broker-tab-users" role="tabpanel">
                         <div class="d-flex justify-content-end mb-3">
                             <x-button.new :href="route('broker.createUser', ['broker' => $broker])" />
                         </div>
@@ -238,6 +252,24 @@
 @stop
 
 @section('script')
+@parent
+@include('pages.booking.partials.partner-search-script')
+<script>
+    document.addEventListener('shown.bs.tab', function(event) {
+        var target = event.target.getAttribute('data-bs-target');
+        if (target !== '#broker-tab-transactions') return;
+        if (typeof $ === 'undefined' || !$.fn.DataTable) return;
+
+        var $table = $('#broker-transactions-datatable');
+        if ($table.length && $.fn.DataTable.isDataTable($table)) {
+            $table.DataTable().columns.adjust();
+            if ($table.DataTable().responsive) {
+                $table.DataTable().responsive.recalc();
+            }
+        }
+    });
+
+</script>
 @if ($errors->hasAny(['name', 'code', 'email', 'password', 'discount', 'discount_type']))
 <script>
     document.addEventListener('DOMContentLoaded', function() {

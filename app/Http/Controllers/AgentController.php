@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agent;
 use App\Models\AgentAccountTransection;
 use App\Models\SalesPartner;
+use App\Services\PartnerBookingListService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class AgentController extends Controller
 {
+    public function __construct(
+        private PartnerBookingListService $partnerBookings
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -45,8 +51,18 @@ class AgentController extends Controller
      */
     public function create()
     {
+        $apiAgents = Agent::where('type', 'API')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn(Agent $item) => [
+                $item->id => trim($item->name . ($item->code ? " ({$item->code})" : '')),
+            ])
+            ->all();
+
         return view('pages.agent.create', [
-            'title' => 'Create Agent'
+            'title' => 'Create Agent',
+            'discountTypes' => SalesPartnerController::getDiscountTypes(),
+            'apiAgents' => $apiAgents,
         ]);
     }
 
@@ -61,11 +77,12 @@ class AgentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $agent = SalesPartner::with([
             'agentAccount.transections' => fn($q) => $q->orderBy('created_at', 'desc'),
             'user',
+            'agentApi',
         ])
             ->where('type', 'agent')
             ->where('agent_id', env('AGENT_ID'))
@@ -75,15 +92,48 @@ class AgentController extends Controller
             ? $agent->agentAccount->transections->where('type', 'topup')
             : collect();
 
-        return view('pages.agent.show', [
+        $bookingResult = $this->partnerBookings->search($request, $agent->id);
+        $bookings = $bookingResult['bookings'];
+
+        if ($request->input('export') === 'excel') {
+            return $this->partnerBookings->exportExcel($bookings, 'agent', 'agent-booking-report');
+        }
+
+        if ($request->input('ispdf') === 'Y') {
+            return $this->partnerBookings->exportPdf(
+                $bookings,
+                'agent',
+                $request->input('daterange'),
+                $bookingResult['startDate'],
+                $bookingResult['endDate'],
+                $request->input('date_type'),
+                'agent-booking-report'
+            );
+        }
+
+        $apiAgents = Agent::where('type', 'API')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn(Agent $item) => [
+                $item->id => trim($item->name . ($item->code ? " ({$item->code})" : '')),
+            ])
+            ->all();
+
+        return view('pages.agent.show', array_merge($bookingResult['filters'], [
             'title' => 'Agent > ' . $agent->name,
             'breadcrumbs' => [
                 'All Agent' => route('agent.index'),
-                'View' => ''
+                'View' => '',
             ],
             'agent' => $agent,
             'transactions' => $transactions,
-        ]);
+            'bookings' => $bookings,
+            'apiAgents' => $apiAgents,
+            'discountTypes' => SalesPartnerController::getDiscountTypes(),
+            'startDate' => $bookingResult['startDate'],
+            'endDate' => $bookingResult['endDate'],
+            'activeTab' => $request->input('tab', 'bookings'),
+        ]));
     }
 
     /**
@@ -125,7 +175,7 @@ class AgentController extends Controller
             'title' => 'Agent > ' . $agent->name,
             'breadcrumbs' => [
                 'All Agent' => route('agent.index'),
-                'Edit' => ''
+                'Edit' => '',
             ],
             'agent' => $agent,
         ]);
@@ -150,13 +200,17 @@ class AgentController extends Controller
                 Rule::unique('users', 'email')->ignore($userId),
             ],
             'discount' => 'nullable|numeric|min:0|max:100',
+            'discount_type' => ['nullable', 'string', Rule::in(array_keys(SalesPartnerController::getDiscountTypes()))],
             'password' => 'nullable|string|min:8',
+            'agent_api_id' => 'nullable|string|exists:agents,id',
         ]);
 
         $agent->update([
             'name' => $validated['name'],
             'code' => $validated['code'] ?? null,
             'discount' => $validated['discount'] ?? $agent->discount,
+            'discount_type' => $validated['discount_type'] ?? null,
+            'agent_api_id' => $validated['agent_api_id'] ?: null,
         ]);
 
         if ($agent->user) {

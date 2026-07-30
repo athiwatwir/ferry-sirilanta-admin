@@ -21,7 +21,7 @@
                 {{($booking['adult_passenger']+$booking['child_passenger']+$booking['infant_passenger'])}}</td>
         </tr>
         <tr style="line-height: 1.5;">
-            <td><small>{{ date('l d M Y', strtotime($booking['created_at'])) }}</small></td>
+            <td><small>{{ date('l d M Y H:i:s', strtotime($booking['updated_at'])) }}</small></td>
             <td>{{ $booking['bookingno'] }}</td>
             <td class="">
 
@@ -61,9 +61,17 @@
                         }}</span><br>
                 Method:{{ $booking['book_channel'] }}-{{
                     isset($booking['payment_method'])?$booking['payment_method']:'-' }}<br>
-                Transection No.: {{ $booking['referenceno'] }}
+
+                @if(isset($salesPartner['name']))
+                Transection No.: {{ ($booking['payment_method'] ?? '') === 'cash' ? 'Non-Refundable' : ($booking['referenceno'] ?? '-') }}
                 <br>
-                Approved by: @if(isset($user->firstname)) {{$user->firstname}} @else RSVN @endif<br>
+                Approved by: {{ $user['name'] }}<br>
+                @else
+                Transection No.: {{ ($booking['payment_method'] ?? '') === 'cash' ? 'Non-Refundable' : ($booking['referenceno'] ?? '-') }}
+                <br>
+                Approved by: Online RSVN<br>
+                @endif
+
 
 
 

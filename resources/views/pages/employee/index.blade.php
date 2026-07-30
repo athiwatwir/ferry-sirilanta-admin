@@ -46,19 +46,43 @@
                 <th>Code</th>
                 <th>Email</th>
                 <th class="text-center">Point</th>
+                <th class="text-center">Status</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach ($brokers as $broker)
-            <tr>
+            @php $isActive = ($broker->isactive ?? 'Y') === 'Y'; @endphp
+            <tr class="{{ $isActive ? '' : 'table-secondary' }}">
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ $broker->name }}</td>
-                <td>{{ $broker->code }}</td>
-                <td>{{ $broker->user->email }}</td>
-                <td class="text-center">{{ number_format($broker->point ?? 0) }}</td>
+                <td>
+                    <span class="fw-medium {{ $isActive ? '' : 'text-muted' }}">{{ $broker->name }}</span>
+                </td>
+                <td>
+                    <code class="small">{{ $broker->code ?? '-' }}</code>
+                </td>
+                <td class="{{ $isActive ? '' : 'text-muted' }}">{{ $broker->user?->email ?? '-' }}</td>
+                <td class="text-center">
+                    <span class="badge bg-label-warning">{{ number_format($broker->point ?? 0) }}</span>
+                </td>
+                <td class="text-center">
+                    <div class="d-inline-flex flex-column align-items-center gap-2">
+                        @if ($isActive)
+                        <span class="badge bg-label-success">
+                            <i class="icon-base ti tabler-circle-check me-1"></i>Active
+                        </span>
+                        @else
+                        <span class="badge bg-label-danger">
+                            <i class="icon-base ti tabler-circle-x me-1"></i>Inactive
+                        </span>
+                        @endif
+
+                    </div>
+                </td>
                 <td class="text-end">
-                    <a href="{{ route('employee.show', ['employee' => $broker]) }}" class="btn btn-outline-secondary ">View</a>
+                    <a href="{{ route('employee.show', ['employee' => $broker]) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="icon-base ti tabler-eye me-1"></i>View
+                    </a>
                 </td>
             </tr>
             @endforeach

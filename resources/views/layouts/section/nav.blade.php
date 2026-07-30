@@ -17,6 +17,14 @@
                 </a>
             </li>
 
+            @if (Auth::user()->role !='ADMIN')
+            <li class="menu-item">
+                <a href="{{ route('dashboard.index') }}" class="menu-link">
+                    <i class="menu-icon icon-base ti tabler-home"></i>
+                    <div data-i18n="Page 1">Dashboard</div>
+                </a>
+            </li>
+            @endif
 
             <li class="menu-item">
                 <a href="{{ route('booking.index') }}" class="menu-link">
