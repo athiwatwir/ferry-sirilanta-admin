@@ -12,7 +12,7 @@
                     <strong class="text-dark fs-5 f-default-bold">ADMIN</strong>
 
                     @else
-                    <strong class="text-dark fs-5 ms-2 f-default-bold"> {{ strtoupper(Auth::user()->role) }} {{ Auth::user()->name }}</strong>
+                    <strong class="text-dark fs-5 ms-2 f-default-bold"> {{ Auth::user()->name }}</strong>
                     @endif
                 </a>
             </li>

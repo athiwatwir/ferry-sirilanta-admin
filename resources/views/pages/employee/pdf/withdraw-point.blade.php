@@ -56,7 +56,13 @@
                     <td>{{ $booking->created_at?->format('d/m/Y H:i') }}</td>
                     <td>{{ $booking->departdate?->format('d/m/Y') }}</td>
                     <td>{{ $booking->bookingno }}</td>
-                    <td class="text-center">{{ ($tripTypes[$booking->trip_type] ?? null) ?: ($booking->trip_type ?: '-') }}</td>
+                    <td class="text-center">
+                        @php
+                            $tripLabel = ($tripTypes[$booking->trip_type] ?? null) ?: ($booking->trip_type ?: '-');
+                            $subRouteCount = (int) ($booking->sub_route_count ?? $booking->booking_sub_routes_count ?? 0);
+                        @endphp
+                        {{ $tripLabel }}@if (($booking->trip_type ?? '') === 'M') ({{ $subRouteCount }})@endif
+                    </td>
                     <td class="text-center">{{ $booking->adult_passenger }}</td>
                     <td class="text-center">{{ $booking->point }}</td>
                     <td class="text-end">{{ number_format((float) $booking->totalamt, 2) }}</td>

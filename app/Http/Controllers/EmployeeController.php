@@ -228,7 +228,7 @@ class EmployeeController extends Controller
                 'tripTypes' => [
                     'O' => 'One-Way',
                     'R' => 'Return',
-                    'M' => 'Multiple',
+                    'M' => 'Multi',
                 ],
             ]);
         }
@@ -261,7 +261,7 @@ class EmployeeController extends Controller
             'tripTypes' => [
                 'O' => 'One-Way',
                 'R' => 'Return',
-                'M' => 'Multiple',
+                'M' => 'Multi',
             ],
         ]);
     }
@@ -274,7 +274,7 @@ class EmployeeController extends Controller
         $bookings = $this->employeePoints->pendingBookingsForPartner($id);
 
         return response()->json([
-            'bookings' => $bookings->map(fn ($b) => [
+            'bookings' => $bookings->map(fn($b) => [
                 'id' => $b->id,
                 'bookingno' => $b->bookingno,
                 'departdate' => $b->departdate?->format('d/m/Y'),
@@ -342,7 +342,7 @@ class EmployeeController extends Controller
             'tripTypes' => [
                 'O' => 'One-Way',
                 'R' => 'Return',
-                'M' => 'Multiple',
+                'M' => 'Multi',
             ],
         ]);
     }
@@ -509,7 +509,7 @@ class EmployeeController extends Controller
             $tripTypes = [
                 'O' => 'One-Way',
                 'R' => 'Return',
-                'M' => 'Multiple',
+                'M' => 'Multi',
             ];
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
@@ -526,15 +526,27 @@ class EmployeeController extends Controller
             fputcsv($handle, ['Passenger Count', $summary['passenger_count']]);
             fputcsv($handle, []);
             fputcsv($handle, [
-                'Booking Date', 'Travel Date', 'Booking No', 'Trip Type', 'Adult', 'Point', 'Amount',
+                'Booking Date',
+                'Travel Date',
+                'Booking No',
+                'Trip Type',
+                'Adult',
+                'Point',
+                'Amount',
             ]);
 
             foreach ($bookings as $booking) {
+                $tripLabel = $tripTypes[$booking->trip_type] ?? ($booking->trip_type ?? '');
+                if (($booking->trip_type ?? '') === 'M') {
+                    $subRouteCount = (int) ($booking->sub_route_count ?? $booking->booking_sub_routes_count ?? 0);
+                    $tripLabel .= " ({$subRouteCount})";
+                }
+
                 fputcsv($handle, [
                     $booking->created_at?->format('d/m/Y H:i') ?? '',
                     $booking->departdate?->format('d/m/Y') ?? '',
                     $booking->bookingno,
-                    $tripTypes[$booking->trip_type] ?? ($booking->trip_type ?? ''),
+                    $tripLabel,
                     $booking->adult_passenger,
                     $booking->point,
                     number_format((float) $booking->totalamt, 2, '.', ''),
@@ -567,7 +579,7 @@ class EmployeeController extends Controller
             'tripTypes' => [
                 'O' => 'One-Way',
                 'R' => 'Return',
-                'M' => 'Multiple',
+                'M' => 'Multi',
             ],
         ])
             ->setOption(['dpi' => 150])

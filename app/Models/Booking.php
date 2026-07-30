@@ -110,7 +110,7 @@ class Booking extends Model
 
     public function bookingSubRoutes()
     {
-        return $this->belongsToMany(SubRoute::class, 'booking_sub_routes', 'booking_id', 'sub_route_id')->withPivot('type', 'traveldate', 'price', 'child_price', 'infant_price', 'id', 'ischange', 'ticketno')->with('route');
+        return $this->belongsToMany(SubRoute::class, 'booking_sub_routes', 'booking_id', 'sub_route_id')->withPivot('type', 'traveldate', 'price', 'child_price', 'infant_price', 'id', 'ischange', 'ticketno')->with('route')->orderBy('traveldate', 'ASC');
     }
 
     public function payments()

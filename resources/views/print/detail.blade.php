@@ -96,36 +96,37 @@
     $user = isset($booking['user'])?$booking['user']:[];
     @endphp
 
-    @foreach ($booking->bookingSubRoutes as $bookingSubRoute)
+    @foreach ($booking->bookingSubRoutes as $index => $bookingSubRoute)
     <img class="banner" src="{{ $bannerBase64 }}" alt="Banner">
-
-
-    <div class="mt-2">
-        <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <td style="text-align: left;">
-                    Ticket No.:{{ $bookingSubRoute->pivot->ticketno }}
-                </td>
-                <td style="text-align: right; white-space: nowrap;">
-                    @if($booking->ispayment=='Y')
-                    <span class="text-danger">PAID</span>
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    Boarding for: {{ $booking->adult_passenger+$booking->child_passenger+$booking->infant_passenger }} Passenger(S)
-                </td>
-            </tr>
-
-        </table>
-    </div>
-
-    <div class="line"></div>
 
     <div class="content">
 
         <div class="section" style="width: 100%;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: left;">
+                        {{ $index+1 }}/{{$booking->bookingSubRoutes->count() }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">
+                        Ticket No.:{{ $bookingSubRoute->pivot->ticketno }}
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        @if($booking->ispayment=='Y')
+                        <span class="text-danger">PAID</span>
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        Boarding for: {{ $booking->adult_passenger+$booking->child_passenger+$booking->infant_passenger }} Passenger(S)
+                    </td>
+                </tr>
+
+            </table>
+
+            <div class="line"></div>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="text-align: left;">
@@ -181,14 +182,13 @@
             Phone No. {{ $booking->defaultCustomer[0]->mobile ?? '-' }}<br>
             Optional Contact: {{ $booking->defaultCustomer[0]->other_contact ?? '-' }}
         </div>
-        <div class="line"></div>
+
         <div class="section">
             Issue By: {{ isset($salesPartner['name'])?$salesPartner['name']:'Online RSVN' }}<br>
             Issue date: {{ \Carbon\Carbon::parse($booking->complete_date)->format('d/m/Y H:i') }}
         </div>
     </div>
     <div class="line"></div>
-    <br>
     <div class="" style="font-size: 14pt;font-weight: bold;text-align: center;">Non-Refundable Ticket</div>
 
     @if (!$loop->last)

@@ -17,8 +17,8 @@
             <td class="" style="width: 25%;padding: 5px;">ISSUED DATE</td>
             <td class="" style="width: 25%;">INVOICE NO.</td>
             <td class="" style="width: 20%;">TICKET NO.</td>
-            <td class="">{{ Str::upper('Number of Passenger:') }}
-                {{($booking['adult_passenger']+$booking['child_passenger']+$booking['infant_passenger'])}}</td>
+            <td class="" style="">{{ Str::upper('Number of Passenger') }}
+            </td>
         </tr>
         <tr style="line-height: 1.5;">
             <td><small>{{ date('l d M Y H:i:s', strtotime($booking['updated_at'])) }}</small></td>
@@ -28,9 +28,8 @@
                 {{ $bookingRoute['pivot']['ticketno'] }}
 
             </td>
-            <td class="">
-                Adult: {{$booking['adult_passenger']}} &nbsp;&nbsp;
-
+            <td class="" style="text-align: center;">
+                <strong> {{$booking['adult_passenger']}}</strong>
             </td>
         </tr>
         <tr style="background-color: #f0f0f0;font-weight: 700;padding: 10px;">
@@ -59,7 +58,7 @@
                 Payment Status: <span class="{{ $statusLabel[$booking['status']]['class']
                         }}">{{ $statusLabel[$booking['status']]['title']
                         }}</span><br>
-                Method:{{ $booking['book_channel'] }}-{{
+                Method: {{ $booking['book_channel'] }}-{{
                     isset($booking['payment_method'])?$booking['payment_method']:'-' }}<br>
 
                 @if(isset($salesPartner['name']))
