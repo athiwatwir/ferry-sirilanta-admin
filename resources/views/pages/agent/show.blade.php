@@ -69,7 +69,7 @@
                                 <div class="flex-grow-1">
                                     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                         <h6 class="mb-0 fw-semibold text-primary">Discount</h6>
-                                        <span class="badge bg-primary fs-6">{{ number_format($agent->discount ?? 0, 2) }}%</span>
+                                        <span class="badge bg-primary fs-6">{{ number_format($agent->discount ?? 0, 2) }}</span>
                                         @if ($agent->discount_type)
                                         <span class="badge bg-label-primary">{{ $discountTypes[$agent->discount_type] ?? $agent->discount_type }}</span>
                                         @endif

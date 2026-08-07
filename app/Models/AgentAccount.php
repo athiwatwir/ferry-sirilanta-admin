@@ -53,4 +53,15 @@ class AgentAccount extends Model
     {
         return $this->hasMany(AgentAccountTransection::class, 'agent_account_id', 'id');
     }
+
+    /**
+     * รองรับทั้ง agent_account.id และ sales_partner_id ใน URL
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field = $field ?: $this->getRouteKeyName();
+
+        return $this->where($field, $value)->first()
+            ?? static::where('sales_partner_id', $value)->first();
+    }
 }

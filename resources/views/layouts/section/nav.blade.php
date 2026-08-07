@@ -105,6 +105,12 @@
                     <div data-i18n="Page 2">Setting</div>
                 </a>
                 <ul class="menu-sub">
+                    <li class="menu-item">
+                        <a href="{{ route('settingFee.index') }}" class="menu-link">
+                            <i class="menu-icon icon-base ti tabler-receipt-2"></i>
+                            <div data-i18n="Analytics">Fee - ค่าธรรมเนียม</div>
+                        </a>
+                    </li>
                     <!--
                     <li class="menu-item">
                         <a href="{{ route('settingFee.index') }}" class="menu-link">

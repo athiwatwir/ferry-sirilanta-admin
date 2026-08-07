@@ -129,7 +129,25 @@ class BrokerController extends Controller
             return redirect()->route('broker.show', $broker)->with('error', 'ไม่พบบัญชี Agent ของ Broker นี้');
         }
 
-        $broker->agentAccount->update(['credit_limit' => $request->credit_limit]);
+        $newLimit = (float) $request->credit_limit;
+        $oldLimit = (float) ($broker->agentAccount->credit_limit ?? 0);
+
+        DB::transaction(function () use ($broker, $newLimit, $oldLimit) {
+            $account = $broker->agentAccount;
+            $account->update(['credit_limit' => $newLimit]);
+
+            AgentAccountTransection::create([
+                'agent_account_id' => $account->id,
+                'type' => 'credit_limit',
+                'amount' => $newLimit,
+                'description' => sprintf(
+                    'Update Credit Limit: %s → %s THB',
+                    number_format($oldLimit, 2),
+                    number_format($newLimit, 2)
+                ),
+                'isapproved' => 'Y',
+            ]);
+        });
 
         return redirect()->route('broker.show', $broker)->with('success', 'อัพเดทวงเงินเครดิตเรียบร้อย');
     }
@@ -341,17 +359,23 @@ class BrokerController extends Controller
 
         DB::transaction(function () use ($broker, $amount) {
             $account = $broker->agentAccount;
-            $account->update(['credit_balance' => $account->credit_balance - $amount]);
+            $oldBalance = (float) ($account->credit_balance ?? 0);
+            $account->update(['credit_balance' => $oldBalance - $amount]);
 
             AgentAccountTransection::create([
                 'agent_account_id' => $account->id,
                 'type' => 'payment',
                 'amount' => $amount,
-                'description' => 'Clear Credit ชำระเครดิตคงเหลือ',
+                'description' => sprintf(
+                    'Clear Credit: ชำระ %s THB (คงเหลือ %s → %s)',
+                    number_format($amount, 2),
+                    number_format($oldBalance, 2),
+                    number_format($oldBalance - $amount, 2)
+                ),
                 'isapproved' => 'Y',
             ]);
         });
 
-        return redirect()->route('broker.show', $broker)->with('success', 'อัพเดทวงเงินเครดิตเรียบร้อย');
+        return redirect()->route('broker.show', $broker)->with('success', 'Clear Credit เรียบร้อย');
     }
 }

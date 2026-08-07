@@ -148,16 +148,7 @@
             <x-button.new text="Book Now!" :href="$bookNowUrl" target="_blank" />
         </div>
 
-        @if ($salesPartner || $role)
-        <div class="dash-welcome__meta">
-            @if ($role)
-            <span class="badge bg-label-primary text-uppercase">{{ $role }}</span>
-            @endif
-            @if ($salesPartner?->code)
-            <span class="badge bg-label-secondary">{{ $salesPartner->code }}</span>
-            @endif
-        </div>
-        @endif
+
     </div>
 </div>
 @endsection

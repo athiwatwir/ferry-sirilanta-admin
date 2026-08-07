@@ -6,6 +6,8 @@ use App\Helpers\UtilHelper;
 use App\Models\Agent;
 use App\Models\Booking;
 use App\Models\SalesPartner;
+use App\Models\User;
+use App\Services\BookNowService;
 use App\Services\BookingService;
 use App\Services\EmployeePointService;
 use Illuminate\Http\Request;
@@ -20,7 +22,8 @@ class BookingController extends Controller
 {
     public function __construct(
         private BookingService $bookingService,
-        private EmployeePointService $employeePoints
+        private EmployeePointService $employeePoints,
+        private BookNowService $bookNowService
     ) {}
 
     /**
@@ -57,6 +60,7 @@ class BookingController extends Controller
         $tripType = request()->trip_type;
 
         $agent_id = request()->agent_id;
+        $user_id = request()->user_id;
         $salesPartner = null;
 
         //dd($request->filled('status'));
@@ -75,6 +79,7 @@ class BookingController extends Controller
             ->join('customers as c', 'bc.customer_id', '=', 'c.id')
             ->leftJoin('agents as ag', 'b.aff_id', '=', 'ag.id')
             ->leftJoin('payments as p', 'b.id', '=', 'p.booking_id')
+            ->leftJoin('users as u', 'b.user_id', '=', 'u.id')
             ->select(
                 'b.id',
                 'b.created_at',
@@ -112,20 +117,43 @@ class BookingController extends Controller
                 'ag.logo as agent_logo',
                 'b.isearned',
                 'b.payment_method',
-                DB::raw('(select count(*) from booking_sub_routes bsr_cnt where bsr_cnt.booking_id = b.id) as sub_route_count')
+                DB::raw('(select count(*) from booking_sub_routes bsr_cnt where bsr_cnt.booking_id = b.id) as sub_route_count'),
+                'u.name as user_name',
+                'b.user_id'
             );
 
         $query->whereIn('b.agent_id', $agentIds);
 
+        $filterUsers = collect();
         if (Auth::user()->role != 'ADMIN') {
             //dd(Auth::user());
             $salesPartnerId = Auth::user()->sales_partner_id;
 
             $query->where('b.sales_partner_id', $salesPartnerId);
 
-            $salesPartner = SalesPartner::with('agentAccount')->find($salesPartnerId);
+            $salesPartner = SalesPartner::with(['agentAccount', 'agentApi'])->find($salesPartnerId);
+
+            if ($salesPartnerId) {
+                if (Auth::user()->isdefault == 'N') {
+                    $query->where('b.user_id', Auth::user()->id);
+                }
+
+                $filterUsers = User::query()
+                    ->where('sales_partner_id', $salesPartnerId)
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'code', 'email']);
+            }
+        } else {
+            $filterUsers = User::query()
+                ->whereNotNull('sales_partner_id')
+                ->whereIn('sales_partner_id', SalesPartner::where('agent_id', $agentId)->pluck('id'))
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'email']);
         }
 
+        if ($request->filled('user_id')) {
+            $query->where('b.user_id', $request->user_id);
+        }
 
         $bookings = null;
         // 🔹 ถ้ามี searchText → ค้นหาทุกช่อง
@@ -231,29 +259,55 @@ class BookingController extends Controller
         if (Auth::user()->role === 'employee') {
             $uniqueBookings = collect($bookings)->unique('id');
             $cashBookings = $uniqueBookings->filter(
-                fn ($b) => strtolower((string) ($b['payment_method'] ?? '')) === 'cash'
+                fn($b) => strtolower((string) ($b['payment_method'] ?? '')) === 'cash'
             );
             $creditMethods = ['cc', 'cstoken', 'gcard', 'credit', 'credit_card'];
             $creditBookings = $uniqueBookings->filter(
-                fn ($b) => in_array(strtolower((string) ($b['payment_method'] ?? '')), $creditMethods, true)
+                fn($b) => in_array(strtolower((string) ($b['payment_method'] ?? '')), $creditMethods, true)
             );
 
             $employeeDashboard = [
                 'ticket_sales_count' => $uniqueBookings->count(),
-                'ticket_sales_amount' => (float) $uniqueBookings->sum(fn ($b) => (float) ($b['totalamt'] ?? 0)),
+                'ticket_sales_amount' => (float) $uniqueBookings->sum(fn($b) => (float) ($b['totalamt'] ?? 0)),
                 'pending_point' => (int) $uniqueBookings
-                    ->filter(fn ($b) => ($b['ispayment'] ?? 'N') === 'Y' && ($b['isearned'] ?? 'N') === 'N')
-                    ->sum(fn ($b) => (int) ($b['point'] ?? 0)),
-                'credit_amount' => (float) $creditBookings->sum(fn ($b) => (float) ($b['totalamt'] ?? 0)),
+                    ->filter(fn($b) => ($b['ispayment'] ?? 'N') === 'Y' && ($b['isearned'] ?? 'N') === 'N')
+                    ->sum(fn($b) => (int) ($b['point'] ?? 0)),
+                'credit_amount' => (float) $creditBookings->sum(fn($b) => (float) ($b['totalamt'] ?? 0)),
                 'credit_count' => $creditBookings->count(),
-                'cash_amount' => (float) $cashBookings->sum(fn ($b) => (float) ($b['totalamt'] ?? 0)),
+                'cash_amount' => (float) $cashBookings->sum(fn($b) => (float) ($b['totalamt'] ?? 0)),
                 'cash_count' => $cashBookings->count(),
             ];
         }
 
+        $searchSummary = collect($bookings)
+            ->unique('id')
+            ->filter(fn($b) => ($b['status'] ?? '') !== 'DR')
+            ->pipe(function ($approved) {
+                return [
+                    'booking_count' => $approved->count(),
+                    // Ticket = จำนวนเลก (1 ticket / booking_sub_route)
+                    'ticket_count' => (int) $approved->sum(fn($b) => max(1, (int) ($b['sub_route_count'] ?? 1))),
+                    'passenger_count' => (int) $approved->sum(fn($b) => (int) ($b['total_passenger'] ?? $b['adult_passenger'] ?? 0)),
+                    // Seats = passengers × จำนวนเลก (one-way/round/multi)
+                    'seat_count' => (int) $approved->sum(function ($b) {
+                        $passengers = (int) ($b['total_passenger'] ?? $b['adult_passenger'] ?? 0);
+                        $legs = max(1, (int) ($b['sub_route_count'] ?? 1));
+
+                        return $passengers * $legs;
+                    }),
+                    'total_amount' => (float) $approved->sum(fn($b) => (float) ($b['totalamt'] ?? 0)),
+                ];
+            });
+
+        $user = Auth::user();
+        $bookNowPartner = $salesPartner;
+        if (!$bookNowPartner && $user->sales_partner_id) {
+            $bookNowPartner = SalesPartner::with('agentApi')->find($user->sales_partner_id);
+        }
+
         //dd($bookings);
         return view('pages.booking.index', [
-            'title' => 'Booking Management',
+            'title' => Auth::user()->role == 'broker' ? 'Booking Management / <i class="icon-base ti tabler-moneybag icon-lg me-1"></i> ' . number_format($salesPartner->agentAccount?->credit_limit - $salesPartner->agentAccount?->credit_balance ?? 0) . 'THB' : 'Booking Management',
             'bookings' => $bookings,
             'sections' => $sections,
             'station_from' => $station_from,
@@ -278,6 +332,10 @@ class BookingController extends Controller
             'date_type' => $date_type,
             'salesPartner' => $salesPartner,
             'employeeDashboard' => $employeeDashboard,
+            'bookNowUrl' => $this->bookNowService->buildUrl($user, $bookNowPartner),
+            'filterUsers' => $filterUsers,
+            'user_id' => $user_id,
+            'searchSummary' => $searchSummary,
         ]);
     }
 
@@ -376,15 +434,26 @@ class BookingController extends Controller
      */
     public function show(string $id)
     {
-        $booking = Booking::whereId($id)->with(['agent', 'bookingSubRoutes', 'bookingCustomers'])->first();
+        $booking = Booking::whereId($id)
+            ->with([
+                'agent',
+                'salesPartner',
+                'user',
+                'bookingSubRoutes',
+                'bookingCustomers',
+                'payments' => fn($q) => $q->orderByDesc('created_at'),
+            ])
+            ->firstOrFail();
 
         return view('pages.booking.show', [
-            'title' => '',
+            'title' => 'Booking > ' . $booking->bookingno,
             'booking' => $booking,
+            'tripTypes' => $this->bookingService->getTripType(),
+            'bookingStatus' => $this->bookingService->status(),
             'breadcrumbs' => [
                 'Booking Management' => route('booking.index'),
-                'Booking Details' => ''
-            ]
+                $booking->bookingno => '',
+            ],
         ]);
     }
 

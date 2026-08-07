@@ -22,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'payment/2c2p/backend',
             'payment/2c2p/frontend',
+            // iframe ข้ามโดเมน: session cookie (SameSite=Lax) ไม่ถูกส่ง → CSRF 419
+            'agent-account/*/top-up',
+            'agentAccount/*/top-up',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

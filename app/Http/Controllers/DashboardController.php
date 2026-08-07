@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\SalesPartner;
+use App\Services\BookNowService;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        protected BookNowService $bookNowService
+    ) {}
+
     public function index()
     {
         $user = Auth::user();
@@ -32,22 +37,6 @@ class DashboardController extends Controller
             $greetingEn = 'Good evening';
         }
 
-        $bookNowQuery = ['aff' => (string) $user->id];
-
-        // ใช้ agentApi จาก sales partner (ไม่พึ่ง session เก่าที่อาจไม่มี public_key)
-        $agentApi = $salesPartner?->agentApi ?? session('agentApi');
-        if ($agentApi) {
-            $agentApi->ensurePublicKey();
-            if ($agentApi->isDirty('public_key')) {
-                $agentApi->save();
-            }
-            if (filled($agentApi->public_key)) {
-                $bookNowQuery['ap'] = (string) $agentApi->public_key;
-            }
-        }
-
-        $bookNowUrl = rtrim((string) env('WEB_URL'), '/') . '?' . http_build_query($bookNowQuery);
-
         return view('pages.dashboard.index', [
             'title' => 'Dashboard',
             'salesPartner' => $salesPartner,
@@ -55,7 +44,7 @@ class DashboardController extends Controller
             'greeting' => $greeting,
             'greetingEn' => $greetingEn,
             'role' => $user->role,
-            'bookNowUrl' => $bookNowUrl,
+            'bookNowUrl' => $this->bookNowService->buildUrl($user, $salesPartner),
         ]);
     }
 }

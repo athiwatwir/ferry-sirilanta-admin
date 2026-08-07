@@ -227,12 +227,21 @@ class TwoC2PService
         $paymentToken = $paymentToken
             ?: $this->recallPaymentToken($invoiceNo !== '' ? $invoiceNo : null, $transactionId !== '' ? $transactionId : null);
 
-        $profiles = array_values(array_unique(array_filter([
+        $rawProfiles = [
             $preferredProfile,
             isset($payload['userDefined4']) ? (string) $payload['userDefined4'] : null,
             self::PROFILE_CREDIT,
             self::PROFILE_ETC,
-        ])));
+        ];
+
+        $profiles = array_values(array_unique(array_filter(
+            $rawProfiles,
+            fn ($profile) => in_array((string) $profile, [self::PROFILE_CREDIT, self::PROFILE_ETC], true)
+        )));
+
+        if ($profiles === []) {
+            $profiles = [self::PROFILE_CREDIT, self::PROFILE_ETC];
+        }
 
         $attempts = 5;
         $lastInquiry = null;

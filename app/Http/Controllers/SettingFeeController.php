@@ -4,72 +4,102 @@ namespace App\Http\Controllers;
 
 use App\Models\SettingFee;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SettingFeeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $agentId = env('AGENT_ID');
-        $settingFee = SettingFee::where('agent_id', $agentId)->first();
-        if (empty($settingFee)) {
-            $settingFee = SettingFee::create([
-                'agent_id' => $agentId
-            ]);
-        }
+        $fees = SettingFee::query()->orderBy('name')->get();
 
-        return redirect()->route('settingFee.edit', ['settingFee' => $settingFee]);
+        return view('pages.setting-fee.index', [
+            'title' => 'Fee Settings',
+            'breadcrumbs' => [
+                'Setting' => '',
+                'Fee' => '',
+            ],
+            'fees' => $fees,
+            'feeTypes' => SettingFee::feeTypes(),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('pages.setting-fee.create', [
+            'title' => 'Create Fee Setting',
+            'breadcrumbs' => [
+                'Fee Settings' => route('settingFee.index'),
+                'Create' => '',
+            ],
+            'feeTypes' => SettingFee::feeTypes(),
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $this->validateFee($request);
+
+        SettingFee::create($validated);
+
+        return redirect()
+            ->route('settingFee.index')
+            ->with('success', 'Fee setting created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(SettingFee $settingFee)
     {
-        //
+        return redirect()->route('settingFee.edit', $settingFee);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(SettingFee $settingFee)
     {
-        //
-
-        return view('pages.setting-fee.edit');
+        return view('pages.setting-fee.edit', [
+            'title' => 'Edit Fee Setting',
+            'breadcrumbs' => [
+                'Fee Settings' => route('settingFee.index'),
+                $settingFee->name => '',
+            ],
+            'fee' => $settingFee,
+            'feeTypes' => SettingFee::feeTypes(),
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, SettingFee $settingFee)
     {
-        //
+        $validated = $this->validateFee($request, $settingFee->id);
+
+        $settingFee->update($validated);
+
+        return redirect()
+            ->route('settingFee.index')
+            ->with('success', 'Fee setting updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(SettingFee $settingFee)
     {
-        //
+        $settingFee->delete();
+
+        return redirect()
+            ->route('settingFee.index')
+            ->with('success', 'Fee setting deleted successfully.');
+    }
+
+    private function validateFee(Request $request, ?int $ignoreId = null): array
+    {
+        $feeTypeKeys = array_keys(SettingFee::feeTypes());
+
+        return $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('setting_fees', 'code')->ignore($ignoreId),
+            ],
+            'credit_card_fee_type' => ['required', 'string', Rule::in($feeTypeKeys)],
+            'credit_card_fee' => 'required|numeric|min:0',
+            'thai_qr_fee_type' => ['required', 'string', Rule::in($feeTypeKeys)],
+            'thai_qr_fee' => 'required|numeric|min:0',
+        ]);
     }
 }

@@ -70,6 +70,51 @@ class AgentAccountController extends Controller
     }
 
     /**
+     * หน้า Top up แยกสำหรับฝัง iframe / เปิดใช้งานจากหน้าอื่น
+     * URL: /agent-account/{agentAccount}/top-up?embed=1
+     */
+    public function topUpPage(Request $request, AgentAccount $agentAccount)
+    {
+        if ($request->filled('payment')) {
+            $status = (string) $request->input('payment');
+            $message = trim((string) $request->input('payment_msg', ''));
+            if ($message === '') {
+                $message = match ($status) {
+                    'success' => 'ชำระเงินสำเร็จ',
+                    'cancelled' => 'ยกเลิกการชำระเงินแล้ว',
+                    default => 'ชำระเงินไม่สำเร็จ',
+                };
+            }
+
+            $flashKey = $status === 'success' ? 'success' : ($status === 'cancelled' ? 'warning' : 'error');
+
+            return redirect()
+                ->route('agentAccount.topUpPage', [
+                    'agentAccount' => $agentAccount,
+                    'embed' => $request->input('embed', 1),
+                ])
+                ->with($flashKey, $message);
+        }
+
+        $agentAccount->load('salesPartner');
+
+        $amount = $request->input('amount');
+        if ($amount !== null && $amount !== '' && is_numeric($amount) && (float) $amount > 0) {
+            $amount = round((float) $amount, 2);
+        } else {
+            $amount = null;
+        }
+
+        return view('pages.agent-account.top-up', [
+            'title' => 'Top up',
+            'agentAccount' => $agentAccount,
+            'embed' => $request->boolean('embed', true),
+            'amount' => $amount,
+            'method' => $request->input('method'), // transfer|card|etc (optional)
+        ]);
+    }
+
+    /**
      * เติมเงิน (Top up) - โอนเงิน / บัตรเครดิต / QR-Wallet (2C2P)
      */
     public function topUp(Request $request, AgentAccount $agentAccount)
@@ -78,7 +123,7 @@ class AgentAccountController extends Controller
 
         if (!in_array($paymentType, ['transfer', 'card', 'etc'], true)) {
             return redirect()
-                ->route('agentAccount.show', $agentAccount)
+                ->to($this->topUpReturnUrl($request, $agentAccount))
                 ->with('error', 'ช่องทางการชำระเงินไม่ถูกต้อง');
         }
 
@@ -113,9 +158,9 @@ class AgentAccountController extends Controller
             'isapproved' => 'N',
         ]);
 
-        session()->flash('success', 'บันทึกคำขอเติมเงินเรียบร้อย รอการอนุมัติ');
-
-        return redirect()->route('agentAccount.show', $agentAccount);
+        return redirect()
+            ->to($this->topUpReturnUrl($request, $agentAccount))
+            ->with('success', 'บันทึกคำขอเติมเงินเรียบร้อย รอการอนุมัติ');
     }
 
     /**
@@ -135,6 +180,7 @@ class AgentAccountController extends Controller
         $tag = $isCard ? '[CARD]' : '[ETC]';
         $note = trim((string) $request->input('description', ''));
         $description = $tag . ($note !== '' ? ' ' . $note : '');
+        $embed = $request->boolean('embed');
 
         $transaction = AgentAccountTransection::create([
             'agent_account_id' => $agentAccount->id,
@@ -145,7 +191,10 @@ class AgentAccountController extends Controller
             'isapproved' => 'N',
         ]);
 
-        $invoiceNo = 'WT' . str_replace('-', '', $transaction->id);
+        $invoiceNo = 'WT' . strtoupper(str_replace('-', '', $transaction->id));
+        $transaction->update([
+            'description' => trim($description . ' INV:' . $invoiceNo),
+        ]);
 
         if ($isCard) {
             $channels = ['CC'];
@@ -169,9 +218,10 @@ class AgentAccountController extends Controller
                 'frontendReturnUrl' => route('payment.2c2p.frontend'),
                 'backendReturnUrl' => route('payment.2c2p.backend'),
                 'userDefined1' => 'wallet_topup',
-                'userDefined2' => $agentAccount->id,
-                'userDefined3' => $transaction->id,
+                'userDefined2' => (string) $agentAccount->id,
+                'userDefined3' => (string) $transaction->id,
                 'userDefined4' => $profile,
+                'userDefined5' => $embed ? 'embed' : null,
             ]);
 
             if (!empty($payment['paymentToken'])) {
@@ -186,11 +236,23 @@ class AgentAccountController extends Controller
             ]);
 
             return redirect()
-                ->route('agentAccount.show', $agentAccount)
+                ->to($this->topUpReturnUrl($request, $agentAccount))
                 ->with('error', "ไม่สามารถเปิดหน้าชำระ{$label}ได้: " . $e->getMessage());
         }
 
         return redirect()->away($payment['webPaymentUrl']);
+    }
+
+    private function topUpReturnUrl(Request $request, AgentAccount $agentAccount): string
+    {
+        if ($request->boolean('embed') || $request->input('embed') === '1') {
+            return route('agentAccount.topUpPage', [
+                'agentAccount' => $agentAccount,
+                'embed' => 1,
+            ]);
+        }
+
+        return route('agentAccount.show', $agentAccount);
     }
 
     /**

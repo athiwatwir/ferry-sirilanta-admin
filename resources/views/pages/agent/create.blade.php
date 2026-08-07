@@ -15,7 +15,7 @@
                 <x-form.float.selection name="discount_type" label="Discount Type" :options="$discountTypes" :default="old('discount_type')" :isrequire="false" :isempty="true" />
             </div>
             <div class="col-12 col-lg-2">
-                <x-form.float.input name="discount" label="Discount %" type="number" :value="old('discount')" :isrequire="false" placeholder="0" min="0" max="100" step="0.01" />
+                <x-form.float.input name="discount" label="Discount" type="number" :value="old('discount')" :isrequire="false" placeholder="0" min="0" step="0.01" />
             </div>
             <div class="col-12 col-lg-4">
                 <x-form.float.selection name="agent_api_id" label="Agent API" :options="$apiAgents" :default="old('agent_api_id')" :isrequire="false" :isempty="true" help="เลือก Agent จากตาราง agents สำหรับเชื่อมต่อ API" />

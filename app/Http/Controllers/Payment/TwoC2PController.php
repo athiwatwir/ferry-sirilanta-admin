@@ -18,13 +18,6 @@ class TwoC2PController extends Controller
 
     /**
      * Frontend return URL after customer finishes / cancels payment page.
-     *
-     * หมายเหตุ: 2C2P มัก POST กลับแบบ cross-site ทำให้ session cookie ไม่มาด้วย
-     * จึงไม่พึ่ง session flash — ใส่สถานะใน query แล้วใช้ HTML bridge เป็น top-level GET
-     * เพื่อให้ browser ส่ง cookie เดิมกลับมา (ดู PreserveSessionOnCrossSiteReturn)
-     *
-     * Frontend มักส่ง paymentResponse เป็น Base64 JSON + respCode=2000
-     * ต้อง Payment Inquiry เพื่อยืนยัน 0000 แล้วค่อยอนุมัติ wallet
      */
     public function frontend(Request $request)
     {
@@ -32,18 +25,22 @@ class TwoC2PController extends Controller
             ?? $request->input('payload')
             ?? $request->getContent();
 
+        $frontendRespCode = null;
+
         try {
             $payload = $this->twoC2P->decodeRequestPayload(
                 is_string($rawPayload) ? $rawPayload : null
             );
+            $frontendRespCode = (string) ($payload['respCode'] ?? '');
             $payload = $this->twoC2P->resolveCompletedPayment(
                 $payload,
-                isset($payload['userDefined4']) ? (string) $payload['userDefined4'] : null
+                $this->resolvePreferredProfile($payload)
             );
         } catch (TwoC2PException $e) {
             Log::warning('2C2P frontend decode failed', [
                 'message' => $e->getMessage(),
-                'payload_preview' => is_string($rawPayload) ? substr($rawPayload, 0, 120) : null,
+                'payload_preview' => is_string($rawPayload) ? substr($rawPayload, 0, 200) : null,
+                'request_keys' => array_keys($request->all()),
             ]);
 
             return $this->browserReturn(
@@ -56,9 +53,17 @@ class TwoC2PController extends Controller
 
         $invoiceNo = (string) ($payload['invoiceNo'] ?? '');
         $respCode = (string) ($payload['respCode'] ?? '');
-        $success = $this->twoC2P->isPaymentSuccessful($respCode);
+        $success = $this->twoC2P->isPaymentSuccessful($respCode)
+            || !empty($payload['approvedViaFrontend2000'])
+            || $frontendRespCode === '2000';
+
         $cancelled = in_array($respCode, ['0003', '2003', '0014'], true)
+            || in_array((string) $frontendRespCode, ['0003', '2003', '0014'], true)
             || str_contains(strtolower((string) ($payload['respDesc'] ?? '')), 'cancel');
+
+        if ($cancelled) {
+            $success = false;
+        }
 
         $message = $success
             ? 'ชำระเงินสำเร็จ Wallet ถูกเติมแล้ว'
@@ -68,6 +73,18 @@ class TwoC2PController extends Controller
 
         $status = $success ? 'success' : ($cancelled ? 'cancelled' : 'error');
 
+        Log::info('2C2P frontend callback', [
+            'invoiceNo' => $invoiceNo,
+            'frontendRespCode' => $frontendRespCode,
+            'resolvedRespCode' => $respCode,
+            'success' => $success,
+            'userDefined1' => $payload['userDefined1'] ?? null,
+            'userDefined2' => $payload['userDefined2'] ?? null,
+            'userDefined3' => $payload['userDefined3'] ?? null,
+            'userDefined4' => $payload['userDefined4'] ?? null,
+            'userDefined5' => $payload['userDefined5'] ?? null,
+        ]);
+
         $transaction = $this->findWalletTopUpTransaction($invoiceNo, $payload);
         if ($transaction) {
             if ($success) {
@@ -76,13 +93,15 @@ class TwoC2PController extends Controller
                 $status = 'success';
             }
 
-            return $this->browserReturn(
-                route('agentAccount.show', [
-                    'agentAccount' => $transaction->agent_account_id,
-                    'payment' => $status,
-                    'payment_msg' => $message,
-                ])
-            );
+            return $this->browserReturn($this->walletReturnUrl($transaction, $payload, $status, $message));
+        }
+
+        // Wallet top-up ที่หา transaction ไม่เจอ — ยังพยายามหาจาก invoice / account อีกครั้ง
+        if ($this->looksLikeWalletTopUp($invoiceNo, $payload)) {
+            Log::warning('2C2P wallet top-up transaction not found on frontend', [
+                'invoiceNo' => $invoiceNo,
+                'payload' => $payload,
+            ]);
         }
 
         return $this->browserReturn(
@@ -106,21 +125,28 @@ class TwoC2PController extends Controller
             $payload = $this->twoC2P->decodeRequestPayload(
                 is_string($rawPayload) ? $rawPayload : null
             );
+            $frontendRespCode = (string) ($payload['respCode'] ?? '');
             $payload = $this->twoC2P->resolveCompletedPayment(
                 $payload,
-                isset($payload['userDefined4']) ? (string) $payload['userDefined4'] : null
+                $this->resolvePreferredProfile($payload)
             );
         } catch (TwoC2PException $e) {
             Log::warning('2C2P backend decode failed', ['message' => $e->getMessage()]);
             return response('ERROR', 400);
         }
 
+        $success = $this->twoC2P->isPaymentSuccessful($payload['respCode'] ?? null)
+            || !empty($payload['approvedViaFrontend2000'])
+            || (($frontendRespCode ?? '') === '2000');
+
         Log::info('2C2P backend notification', [
             'invoiceNo' => $payload['invoiceNo'] ?? null,
             'respCode' => $payload['respCode'] ?? null,
+            'frontendRespCode' => $frontendRespCode ?? null,
+            'success' => $success,
         ]);
 
-        if ($this->twoC2P->isPaymentSuccessful($payload['respCode'] ?? null)) {
+        if ($success) {
             $transaction = $this->findWalletTopUpTransaction(
                 (string) ($payload['invoiceNo'] ?? ''),
                 $payload
@@ -133,9 +159,6 @@ class TwoC2PController extends Controller
         return response('OK', 200);
     }
 
-    /**
-     * คืนหน้า bridge แล้วพาไปปลายทางด้วย top-level GET (รักษา session cookie)
-     */
     private function browserReturn(string $url)
     {
         return response()
@@ -143,46 +166,112 @@ class TwoC2PController extends Controller
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 
+    private function resolvePreferredProfile(array $payload): ?string
+    {
+        $profile = strtolower(trim((string) ($payload['userDefined4'] ?? '')));
+        if (in_array($profile, [TwoC2PService::PROFILE_CREDIT, TwoC2PService::PROFILE_ETC], true)) {
+            return $profile;
+        }
+
+        return null;
+    }
+
+    private function looksLikeWalletTopUp(string $invoiceNo, array $payload): bool
+    {
+        return str_starts_with(strtoupper($invoiceNo), 'WT')
+            || ($payload['userDefined1'] ?? '') === 'wallet_topup'
+            || str_contains((string) ($payload['description'] ?? ''), 'Wallet Top Up');
+    }
+
+    private function walletReturnUrl(
+        AgentAccountTransection $transaction,
+        array $payload,
+        string $status,
+        string $message
+    ): string {
+        $returnEmbed = (($payload['userDefined5'] ?? '') === 'embed')
+            || (($payload['userDefined4'] ?? '') === 'embed');
+
+        if ($returnEmbed) {
+            return route('agentAccount.topUpPage', [
+                'agentAccount' => $transaction->agent_account_id,
+                'embed' => 1,
+                'payment' => $status,
+                'payment_msg' => $message,
+            ]);
+        }
+
+        return route('agentAccount.show', [
+            'agentAccount' => $transaction->agent_account_id,
+            'payment' => $status,
+            'payment_msg' => $message,
+        ]);
+    }
+
     private function findWalletTopUpTransaction(string $invoiceNo, array $payload = []): ?AgentAccountTransection
     {
-        // จาก userDefined3 ที่ส่งตอน create token (= transaction uuid)
+        $candidates = [];
+
         $userDefined3 = trim((string) ($payload['userDefined3'] ?? ''));
         if ($userDefined3 !== '') {
-            $byUserDefined = AgentAccountTransection::with('agentAccount')
-                ->where('id', $userDefined3)
-                ->where('type', 'topup')
-                ->first();
-            if ($byUserDefined) {
-                return $byUserDefined;
-            }
+            $candidates[] = $userDefined3;
         }
 
-        if ($invoiceNo === '') {
-            return null;
-        }
-
-        // Invoice format from wallet top-up: WT + uuid without dashes
-        if (str_starts_with(strtoupper($invoiceNo), 'WT') && strlen($invoiceNo) >= 34) {
+        $invoiceNo = strtoupper(trim($invoiceNo));
+        if ($invoiceNo !== '' && str_starts_with($invoiceNo, 'WT')) {
             $hex = strtolower(substr($invoiceNo, 2));
-            $uuid = substr($hex, 0, 8) . '-'
-                . substr($hex, 8, 4) . '-'
-                . substr($hex, 12, 4) . '-'
-                . substr($hex, 16, 4) . '-'
-                . substr($hex, 20, 12);
+            $hex = preg_replace('/[^a-f0-9]/', '', $hex) ?? '';
+            if (strlen($hex) >= 32) {
+                $hex = substr($hex, 0, 32);
+                $candidates[] = substr($hex, 0, 8) . '-'
+                    . substr($hex, 8, 4) . '-'
+                    . substr($hex, 12, 4) . '-'
+                    . substr($hex, 16, 4) . '-'
+                    . substr($hex, 20, 12);
+            }
+            $candidates[] = $invoiceNo;
+        }
 
-            $byInvoice = AgentAccountTransection::with('agentAccount')
-                ->where('id', $uuid)
+        foreach (array_unique(array_filter($candidates)) as $id) {
+            $found = AgentAccountTransection::with('agentAccount')
+                ->where('id', $id)
                 ->where('type', 'topup')
                 ->first();
-            if ($byInvoice) {
-                return $byInvoice;
+            if ($found) {
+                return $found;
             }
         }
 
-        return AgentAccountTransection::with('agentAccount')
-            ->where('id', $invoiceNo)
-            ->where('type', 'topup')
-            ->first();
+        if ($invoiceNo !== '') {
+            $byDesc = AgentAccountTransection::with('agentAccount')
+                ->where('type', 'topup')
+                ->where('description', 'like', '%' . $invoiceNo . '%')
+                ->orderByDesc('created_at')
+                ->first();
+            if ($byDesc) {
+                return $byDesc;
+            }
+        }
+
+        // Fallback: หา topup ล่าสุดของบัญชีที่ยังไม่อนุมัติ
+        $accountId = trim((string) ($payload['userDefined2'] ?? ''));
+        if ($accountId !== '') {
+            $pending = AgentAccountTransection::with('agentAccount')
+                ->where('agent_account_id', $accountId)
+                ->where('type', 'topup')
+                ->where('isapproved', 'N')
+                ->where(function ($q) {
+                    $q->where('description', 'like', '[CARD]%')
+                        ->orWhere('description', 'like', '[ETC]%');
+                })
+                ->orderByDesc('created_at')
+                ->first();
+            if ($pending) {
+                return $pending;
+            }
+        }
+
+        return null;
     }
 
     private function approveWalletTopUp(AgentAccountTransection $transaction, array $payload): void
@@ -213,15 +302,21 @@ class TwoC2PController extends Controller
             ]);
 
             if ($locked->agentAccount) {
-                $account = $locked->agentAccount;
-                $account->wallet_balance = ((float) ($account->wallet_balance ?? 0)) + (float) $locked->amount;
-                $account->save();
+                $account = \App\Models\AgentAccount::where('id', $locked->agent_account_id)
+                    ->lockForUpdate()
+                    ->first();
+                if ($account) {
+                    $account->wallet_balance = ((float) ($account->wallet_balance ?? 0)) + (float) $locked->amount;
+                    $account->save();
+                    $locked->setRelation('agentAccount', $account);
+                }
             }
 
             Log::info('2C2P wallet top-up approved', [
                 'transaction_id' => $locked->id,
                 'amount' => $locked->amount,
                 'invoiceNo' => $payload['invoiceNo'] ?? null,
+                'wallet_balance' => $locked->agentAccount->wallet_balance ?? null,
             ]);
         });
     }

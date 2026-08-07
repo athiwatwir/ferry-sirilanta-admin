@@ -88,7 +88,7 @@
 
                         @if (isset($title))
                         <h1 class="h3 d-flex align-items-center text-primary">
-                            {{ $title }}
+                            {!! $title !!}
                         </h1>
                         @endif
                         @yield('content')

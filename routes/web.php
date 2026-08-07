@@ -61,6 +61,14 @@ Route::controller(TwoC2PController::class)->prefix('payment/2c2p')->group(functi
     Route::post('/backend', 'backend')->name('payment.2c2p.backend');
 });
 
+// Top-up ฝัง iframe ได้โดยไม่ต้อง login (รู้ agent-account id / sales_partner_id)
+Route::controller(AgentAccountController::class)->group(function () {
+    Route::get('/agent-account/{agentAccount}/top-up', 'topUpPage')->name('agentAccount.topUpPage');
+    Route::post('/agent-account/{agentAccount}/top-up', 'topUp')->name('agentAccount.topUp');
+    Route::get('/agentAccount/{agentAccount}/top-up', 'topUpPage');
+    Route::post('/agentAccount/{agentAccount}/top-up', 'topUp');
+});
+
 Route::middleware('auth')->group(function () {
 
     Route::get('/', [BookingController::class, 'index']);
@@ -181,7 +189,6 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(AgentAccountController::class)->group(function () {
         Route::get('/agent-account/slip/{transaction}', 'showSlip')->name('agentAccount.slip');
-        Route::post('/agent-account/{agentAccount}/top-up', 'topUp')->name('agentAccount.topUp');
     });
 
     Route::controller(AgentController::class)->group(function () {

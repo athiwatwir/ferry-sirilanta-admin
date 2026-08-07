@@ -326,6 +326,7 @@ class PartnerBookingListService
             ->join('customers as c', 'bc.customer_id', '=', 'c.id')
             ->leftJoin('agents as ag', 'b.aff_id', '=', 'ag.id')
             ->leftJoin('payments as p', 'b.id', '=', 'p.booking_id')
+            ->leftJoin('users as u', 'b.user_id', '=', 'u.id')
             ->select(
                 'b.id',
                 'b.created_at',
@@ -362,7 +363,8 @@ class PartnerBookingListService
                 'b.agent_id',
                 'ag.logo as agent_logo',
                 'b.isearned',
-                DB::raw('(select count(*) from booking_sub_routes bsr_cnt where bsr_cnt.booking_id = b.id) as sub_route_count')
+                DB::raw('(select count(*) from booking_sub_routes bsr_cnt where bsr_cnt.booking_id = b.id) as sub_route_count'),
+                'u.name as user_name'
             );
     }
 

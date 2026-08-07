@@ -8,48 +8,61 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 /**
  * Class SettingFee
- *
- * @property string $id
- * @property string|null $is_use_pf
- * @property string|null $is_use_sc
- * @property string $agent_id
- * @property string|null $pf_type
- * @property string|null $pf_mode
- * @property float|null $pf_regular_value
- * @property string|null $sc_type
- * @property string|null $sc_mode
- * @property float|null $sc_regular_value
+ * 
+ * @property int $id
+ * @property string $name
+ * @property string $credit_card_fee_type
+ * @property float $credit_card_fee
+ * @property string $thai_qr_fee_type
+ * @property float $thai_qr_fee
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property string|null $description
+ * @property string $code
  *
  * @package App\Models
  */
 class SettingFee extends Model
 {
-    use HasUuids;
-    protected $table = 'setting_fees';
-    public $incrementing = false;
+	protected $table = 'setting_fees';
 
-    protected $casts = [
-        'pf_regular_value' => 'float',
-        'sc_regular_value' => 'float'
-    ];
+	protected $casts = [
+		'credit_card_fee' => 'float',
+		'thai_qr_fee' => 'float'
+	];
 
-    protected $fillable = [
-        'is_use_pf',
-        'is_use_sc',
-        'agent_id',
-        'pf_type',
-        'pf_mode',
-        'pf_regular_value',
-        'sc_type',
-        'sc_mode',
-        'sc_regular_value',
-        'description'
-    ];
+	protected $fillable = [
+		'name',
+		'credit_card_fee_type',
+		'credit_card_fee',
+		'thai_qr_fee_type',
+		'thai_qr_fee',
+		'code'
+	];
+
+	public static function feeTypes(): array
+	{
+		return [
+			'percent' => 'Percent (%)',
+			'fixed' => 'Fixed (THB)',
+		];
+	}
+
+	public function formatFee(string $channel = 'credit_card'): string
+	{
+		$type = $channel === 'thai_qr'
+			? ($this->thai_qr_fee_type ?? '')
+			: ($this->credit_card_fee_type ?? '');
+		$value = $channel === 'thai_qr'
+			? (float) ($this->thai_qr_fee ?? 0)
+			: (float) ($this->credit_card_fee ?? 0);
+
+		if ($type === 'percent') {
+			return number_format($value, 2) . '%';
+		}
+
+		return number_format($value, 2) . ' THB';
+	}
 }

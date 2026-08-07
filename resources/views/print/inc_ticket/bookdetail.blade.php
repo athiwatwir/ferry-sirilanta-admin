@@ -1,3 +1,10 @@
+<style>
+    .thai {
+        font-family: "Courier", sans-serif;
+        font-size: 16pt;
+    }
+
+</style>
 <div class="prow">
     <table class="w-100 ptable" style="padding-bottom: 10px;width: 100%;">
         <tr>
@@ -58,21 +65,28 @@
                 Payment Status: <span class="{{ $statusLabel[$booking['status']]['class']
                         }}">{{ $statusLabel[$booking['status']]['title']
                         }}</span><br>
+                @if($user['role'] == 'broker' || $user['role'] != 'borker_employee')
+                Method: {{ $salesPartner['name'] }}<br>
+                @else
                 Method: {{ $booking['book_channel'] }}-{{
                     isset($booking['payment_method'])?$booking['payment_method']:'-' }}<br>
+                @endif
 
-                @if(isset($salesPartner['name']))
+                @if(isset($salesPartner['name']) && $user['role'] != 'broker' && $user['role'] != 'broker_employee')
                 Transection No.: {{ ($booking['payment_method'] ?? '') === 'cash' ? 'Non-Refundable' : ($booking['referenceno'] ?? '-') }}
                 <br>
-                Approved by: {{ $user['name'] }}<br>
+                Approved by: <span>{{ $user['name'] }}</span><br>
+                @elseif($user['role'] == 'broker' || $user['role'] != 'borker_employee')
+
+                Transection No.: <small>{{ date('dmYHi', strtotime($booking['updated_at'])) }}</small>
+                <br>
+                Approved by: <span>{{ $user['name'] }}</span><br>
+
                 @else
                 Transection No.: {{ ($booking['payment_method'] ?? '') === 'cash' ? 'Non-Refundable' : ($booking['referenceno'] ?? '-') }}
                 <br>
                 Approved by: Online RSVN<br>
                 @endif
-
-
-
 
             </td>
 

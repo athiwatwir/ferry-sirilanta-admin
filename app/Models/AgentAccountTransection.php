@@ -39,11 +39,23 @@ class AgentAccountTransection extends Model
         'amount',
         'description',
         'image_path',
-        'isapproved'
+        'isapproved',
+        'booking_id',
+        'user_id'
     ];
 
     public function agentAccount()
     {
         return $this->belongsTo(AgentAccount::class, 'agent_account_id', 'id');
+    }
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

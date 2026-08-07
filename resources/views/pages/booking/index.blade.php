@@ -2,9 +2,7 @@
 
 @section('content')
 
-@if ($salesPartner && Auth::user()->role =='broker')
-@include('pages.booking.dashboard.broker')
-@endif
+
 <x-card>
     <div class="row">
         <div class="col-12 text-end mb-3">
@@ -73,6 +71,19 @@
                             <label for="email">Email</label>
                         </div>
                     </div>
+                    <div class="col-12 col-md-3">
+                        <div class="form-floating mb-3">
+                            <select class="form-select" id="user_id" name="user_id">
+                                <option value="">-- All --</option>
+                                @foreach ($filterUsers as $filterUser)
+                                <option value="{{ $filterUser->id }}" @selected((string) $user_id===(string) $filterUser->id)>
+                                    {{ $filterUser->name }}@if ($filterUser->code) ({{ $filterUser->code }})@endif
+                                </option>
+                                @endforeach
+                            </select>
+                            <label for="user_id">User</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="row">
 
@@ -93,10 +104,10 @@
                             <label for="email">Search Text</label>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <x-button.new text="Book Now!" href="{{ env('WEB_URL')}}?aff={{ Auth::user()->id }}" target="_blank" />
+                    <div class="col-4" style="display: none;">
+                        <x-button.new text="Book Now!" :href="$bookNowUrl" target="_blank" />
                     </div>
-                    <div class="col-8 text-end">
+                    <div class="col-12 text-end">
                         <a class="btn btn-secondary" href="{{ route('booking.index') }}"><i class="fa-solid fa-arrows-rotate"></i> Clear</a>
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i>
                             Search</button>
@@ -106,6 +117,102 @@
 
         </div>
     </div>
+    <div class="row g-2 mb-3 py-3">
+        <div class="col-12 col-md-4">
+            <div class="d-flex align-items-center p-2 px-3 rounded border bg-label-primary h-100">
+                <div class="row g-0 flex-grow-1 min-w-0 w-100">
+                    <div class="col-6 pe-2">
+                        <div class="d-flex align-items-center">
+                            <span class="avatar avatar-sm me-2 flex-shrink-0">
+                                <span class="avatar-initial rounded bg-primary">
+                                    <i class="icon-base ti tabler-calendar-check icon-sm"></i>
+                                </span>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold lh-1">{{ number_format($searchSummary['booking_count'] ?? 0) }}</div>
+                                <small class="text-muted">Bookings</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 ps-2 border-start">
+                        <div class="d-flex align-items-center">
+                            <span class="avatar avatar-sm me-2 flex-shrink-0">
+                                <span class="avatar-initial rounded bg-primary">
+                                    <i class="icon-base ti tabler-ticket icon-sm"></i>
+                                </span>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold lh-1">{{ number_format($searchSummary['ticket_count'] ?? 0) }}</div>
+                                <small class="text-muted">Tickets</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="d-flex align-items-center p-2 px-3 rounded border bg-label-info h-100">
+                <div class="row g-0 flex-grow-1 min-w-0 w-100">
+                    <div class="col-6 pe-2">
+                        <div class="d-flex align-items-center">
+                            <span class="avatar avatar-sm me-2 flex-shrink-0">
+                                <span class="avatar-initial rounded bg-info">
+                                    <i class="icon-base ti tabler-users icon-sm"></i>
+                                </span>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold lh-1">{{ number_format($searchSummary['passenger_count'] ?? 0) }}</div>
+                                <small class="text-muted">Passengers</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 ps-2 border-start">
+                        <div class="d-flex align-items-center">
+                            <span class="avatar avatar-sm me-2 flex-shrink-0">
+                                <span class="avatar-initial rounded bg-info">
+                                    <i class="icon-base ti tabler-armchair icon-sm"></i>
+                                </span>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold lh-1">{{ number_format($searchSummary['seat_count'] ?? 0) }}</div>
+                                <small class="text-muted">Seats</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="d-flex align-items-center p-2 px-3 rounded border bg-label-success h-100">
+                <span class="avatar avatar-sm me-2 flex-shrink-0">
+                    <span class="avatar-initial rounded bg-success">
+                        <i class="icon-base ti tabler-cash icon-sm"></i>
+                    </span>
+                </span>
+                <div class="min-w-0">
+                    <div class="fw-semibold lh-1">
+                        <x-label-price :price="$searchSummary['total_amount'] ?? 0" />
+                    </div>
+                    <small class="text-muted">Total Amount</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <small class="text-muted">
+                <i class="icon-base ti tabler-calendar-event icon-xs me-1"></i>
+                @if (!empty($date_type) && $date_type === 'travel_date')
+                Travel date
+                @else
+                Booking date
+                @endif
+                {{ $startDate instanceof \Carbon\Carbon ? $startDate->format('d/m/Y') : \Carbon\Carbon::parse($startDate)->format('d/m/Y') }}
+                –
+                {{ $endDate instanceof \Carbon\Carbon ? $endDate->format('d/m/Y') : \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
+                · Summary excludes Non Approved
+            </small>
+        </div>
+    </div>
+
     <hr>
     <div class="row mb-3">
         <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -181,18 +288,18 @@
             $('#export').val(type === 'excel' ? 'excel' : '');
             form.attr('target', '_blank');
             form.submit();
-            setTimeout(function () {
+            setTimeout(function() {
                 form.removeAttr('target');
                 $('#ispdf').val('N');
                 $('#export').val('');
             }, 300);
         }
 
-        $('#exportExcel').on('click', function () {
+        $('#exportExcel').on('click', function() {
             submitBookingExport('excel');
         });
 
-        $('#exportPDF').on('click', function () {
+        $('#exportPDF').on('click', function() {
             submitBookingExport('pdf');
         });
 

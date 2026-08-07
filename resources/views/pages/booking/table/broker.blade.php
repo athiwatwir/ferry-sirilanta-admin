@@ -13,6 +13,7 @@
             <th class="text-end">Use Credit</th>
             <th>Route</th>
             <th>Status</th>
+            <th>Branch</th>
             <th class="text-center">Action</th>
         </tr>
     </thead>
@@ -20,10 +21,12 @@
         @foreach ($bookings as $booking)
         <tr>
             <td>
-                <small><x-label-date-time :datetime="$booking['created_at']" /></small>
+                <small>
+                    <x-label-date-time :datetime="$booking['created_at']" /></small>
             </td>
             <td>
-                <small><x-label-date :date="$booking['traveldate']" /></small>
+                <small>
+                    <x-label-date :date="$booking['traveldate']" /></small>
             </td>
             <td><small>{{ $booking['bookingno'] }}</small></td>
             <td><small>{{ $booking['ticketno'] }}</small></td>
@@ -43,7 +46,11 @@
                 </div>
             </td>
             <td class="text-center">
-                <small><x-label-booking-status :status="$booking['status']" /></small>
+                <small>
+                    <x-label-booking-status :status="$booking['status']" /></small>
+            </td>
+            <td>
+                {{ $booking['user_name'] }}
             </td>
             <td class="text-center">
                 @include('pages.booking.partials.table-actions', ['booking' => $booking])
